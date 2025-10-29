@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+from data import load_all_data
 
 # ---------------- 데이터 로드 ----------------
 all_data = load_all_data()

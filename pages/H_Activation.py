@@ -1,7 +1,8 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
 import koreanize_matplotlib
+import matplotlib.pyplot as plt
+from data import load_all_data
 
 st.set_page_config(
     page_title="Activation Dashboard",
@@ -14,43 +15,52 @@ st.title("✨ 사용자 첫 구매 전환 분석")
 st.markdown("### 가입 이후 → 첫 구매 완료 기준 Activation 현황")
 
 # 데이터 로드
-@st.cache_data
-def load_data(base_path="data/"):
-    users = pd.read_csv(base_path + "users.csv")
-    products = pd.read_csv(base_path + "products.csv")
-    orders = pd.read_csv(base_path + "orders.csv")
-    order_items = pd.read_csv(base_path + "order_items.csv")
-    events = pd.read_csv(base_path + "events_sample.csv")
-    inventory_items = pd.read_csv(base_path + "inventory_items.csv")
-    return users, products, orders, order_items, events, inventory_items
+all_data = load_all_data()
+users = all_data["users"]
+products = all_data["products"]
+orders = all_data["orders"]
+order_items = all_data["order_items"]
+events = all_data["events"]
+inventory_items = all_data["inventory_items"]
 
-users, products, orders, order_items, events, inventory_items = load_data()
+# # 데이터 로드
+# @st.cache_data
+# def load_data(base_path="data/"):
+#     users = pd.read_csv(base_path + "users.csv")
+#     products = pd.read_csv(base_path + "products.csv")
+#     orders = pd.read_csv(base_path + "orders.csv")
+#     order_items = pd.read_csv(base_path + "order_items.csv")
+#     events = pd.read_csv(base_path + "events_sample.csv")
+#     inventory_items = pd.read_csv(base_path + "inventory_items.csv")
+#     return users, products, orders, order_items, events, inventory_items
 
-@st.cache_data
-def preprocess_dates(users, orders, order_items, events, inventory_items):
-    date_cols = {
-        "users": ["created_at"],
-        "orders": ["created_at", "returned_at", "shipped_at", "delivered_at"],
-        "order_items": ["created_at", "shipped_at", "delivered_at", "returned_at"],
-        "events": ["created_at"],
-        "inventory_items": ["created_at", "sold_at"]}
+# users, products, orders, order_items, events, inventory_items = load_data()
 
-    for df_name, cols in date_cols.items():
-        for col in cols:
-            globals()[df_name][col] = pd.to_datetime(globals()[df_name][col], errors="coerce")
+# @st.cache_data
+# def preprocess_dates(users, orders, order_items, events, inventory_items):
+#     date_cols = {
+#         "users": ["created_at"],
+#         "orders": ["created_at", "returned_at", "shipped_at", "delivered_at"],
+#         "order_items": ["created_at", "shipped_at", "delivered_at", "returned_at"],
+#         "events": ["created_at"],
+#         "inventory_items": ["created_at", "sold_at"]}
 
-    return users, orders, order_items, events, inventory_items
+#     for df_name, cols in date_cols.items():
+#         for col in cols:
+#             globals()[df_name][col] = pd.to_datetime(globals()[df_name][col], errors="coerce")
 
-users, orders, order_items, events, inventory_items = preprocess_dates(
-    users, orders, order_items, events, inventory_items)
+#     return users, orders, order_items, events, inventory_items
 
-# [2023년 데이터만 추출]
-orders_years = orders.copy()
-users = users[(users['created_at'] >= "2023-01-01") & (users['created_at'] <= "2023-12-31")]
-orders = orders[(orders['created_at'] >= "2023-01-01") & (orders['created_at'] <= "2023-12-31")]
-order_items = order_items[(order_items['created_at'] >= "2023-01-01") & (order_items['created_at'] <= "2023-12-31")]
-events = events[(events['created_at'] >= "2023-01-01") & (events['created_at'] <= "2023-12-31")]
-inventory_items = inventory_items[(inventory_items['created_at'] >= "2023-01-01") & (inventory_items['created_at'] <= "2023-12-31")]
+# users, orders, order_items, events, inventory_items = preprocess_dates(
+#     users, orders, order_items, events, inventory_items)
+
+# # [2023년 데이터만 추출]
+# orders_years = orders.copy()
+# users = users[(users['created_at'] >= "2023-01-01") & (users['created_at'] <= "2023-12-31")]
+# orders = orders[(orders['created_at'] >= "2023-01-01") & (orders['created_at'] <= "2023-12-31")]
+# order_items = order_items[(order_items['created_at'] >= "2023-01-01") & (order_items['created_at'] <= "2023-12-31")]
+# events = events[(events['created_at'] >= "2023-01-01") & (events['created_at'] <= "2023-12-31")]
+# inventory_items = inventory_items[(inventory_items['created_at'] >= "2023-01-01") & (inventory_items['created_at'] <= "2023-12-31")]
 
 
 # -----------------------------------사이드바(필터) 설정-----------------------------------

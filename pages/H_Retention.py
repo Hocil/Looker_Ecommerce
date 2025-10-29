@@ -2,8 +2,7 @@ import streamlit as st
 import pandas as pd
 import koreanize_matplotlib
 import matplotlib.pyplot as plt
-
-# from data import load_all_data
+from data import load_all_data
 
 from charts.retention_charts import (
     create_purchase_distribution_chart, 
@@ -13,24 +12,33 @@ from charts.retention_charts import (
     create_weekday_weekend_chart
 )
 
-@st.cache_data
-def load_all_data(base_path="data/"):
-    users = pd.read_csv(base_path + "users.csv")
-    products = pd.read_csv(base_path + "products.csv")
-    orders = pd.read_csv(base_path + "orders.csv")
-    order_items = pd.read_csv(base_path + "order_items.csv")
-    events = pd.read_csv(base_path + "events_sample.csv") 
-    inventory_items = pd.read_csv(base_path + "inventory_items.csv")
-    return {
-        "users": users,
-        "products": products,
-        "orders": orders,
-        "order_items": order_items,
-        "events": events,
-        "inventory_items": inventory_items
-    }
+# @st.cache_data
+# def load_all_data(base_path="data/"):
+#     users = pd.read_csv(base_path + "users.csv")
+#     products = pd.read_csv(base_path + "products.csv")
+#     orders = pd.read_csv(base_path + "orders.csv")
+#     order_items = pd.read_csv(base_path + "order_items.csv")
+#     events = pd.read_csv(base_path + "events_sample.csv") 
+#     inventory_items = pd.read_csv(base_path + "inventory_items.csv")
+#     return {
+#         "users": users,
+#         "products": products,
+#         "orders": orders,
+#         "order_items": order_items,
+#         "events": events,
+#         "inventory_items": inventory_items
+#     }
 
+# all_data = load_all_data()
+
+# 데이터 로드
 all_data = load_all_data()
+users = all_data["users"]
+products = all_data["products"]
+orders = all_data["orders"]
+order_items = all_data["order_items"]
+events = all_data["events"]
+inventory_items = all_data["inventory_items"]
 
 
 

@@ -1,8 +1,17 @@
 import streamlit as st
 import pandas as pd
+import koreanize_matplotlib
 import matplotlib.pyplot as plt
-import textwrap
-# import koreanize_matplotlib
+from data import load_all_data
+
+# 데이터 로드
+all_data = load_all_data()
+users = all_data["users"]
+products = all_data["products"]
+orders = all_data["orders"]
+order_items = all_data["order_items"]
+events = all_data["events"]
+inventory_items = all_data["inventory_items"]
 
 # ---------------- 페이지 기본 설정 ----------------
 st.set_page_config(
@@ -15,45 +24,45 @@ st.set_page_config(
 st.title("💰 매출 분석")
 st.markdown("### Revenue(매출) 현황")
 
-@st.cache_data
-def load_and_prepare_data(base_path="data/"):
-    # 1. CSV 로드
-    users = pd.read_csv(base_path + "users.csv")
-    products = pd.read_csv(base_path + "products.csv")
-    orders = pd.read_csv(base_path + "orders.csv")
-    order_items = pd.read_csv(base_path + "order_items.csv")
-    events = pd.read_csv(base_path + "events_sample.csv")
-    inventory_items = pd.read_csv(base_path + "inventory_items.csv")
+# @st.cache_data
+# def load_and_prepare_data(base_path="data/"):
+#     # 1. CSV 로드
+#     users = pd.read_csv(base_path + "users.csv")
+#     products = pd.read_csv(base_path + "products.csv")
+#     orders = pd.read_csv(base_path + "orders.csv")
+#     order_items = pd.read_csv(base_path + "order_items.csv")
+#     events = pd.read_csv(base_path + "events_sample.csv")
+#     inventory_items = pd.read_csv(base_path + "inventory_items.csv")
 
-    # 2. 날짜 변환
-    date_cols = {
-        "users": ["created_at"],
-        "orders": ["created_at", "returned_at", "shipped_at", "delivered_at"],
-        "order_items": ["created_at", "shipped_at", "delivered_at", "returned_at"],
-        "events": ["created_at"],
-        "inventory_items": ["created_at", "sold_at"]}
+#     # 2. 날짜 변환
+#     date_cols = {
+#         "users": ["created_at"],
+#         "orders": ["created_at", "returned_at", "shipped_at", "delivered_at"],
+#         "order_items": ["created_at", "shipped_at", "delivered_at", "returned_at"],
+#         "events": ["created_at"],
+#         "inventory_items": ["created_at", "sold_at"]}
     
-    dfs = {
-        "users": users,
-        "orders": orders,
-        "order_items": order_items,
-        "events": events,
-        "inventory_items": inventory_items
-    }
-    for df_name, cols in date_cols.items():
-        for col in cols:
-            dfs[df_name][col] = pd.to_datetime(dfs[df_name][col], errors="coerce")
+#     dfs = {
+#         "users": users,
+#         "orders": orders,
+#         "order_items": order_items,
+#         "events": events,
+#         "inventory_items": inventory_items
+#     }
+#     for df_name, cols in date_cols.items():
+#         for col in cols:
+#             dfs[df_name][col] = pd.to_datetime(dfs[df_name][col], errors="coerce")
 
-    # 3. 2023 데이터만 필터링
-    users = users[(users['created_at'] >= "2023-01-01") & (users['created_at'] <= "2023-12-31")]
-    orders = orders[(orders['created_at'] >= "2023-01-01") & (orders['created_at'] <= "2023-12-31")]
-    order_items = order_items[(order_items['created_at'] >= "2023-01-01") & (order_items['created_at'] <= "2023-12-31")]
-    events = events[(events['created_at'] >= "2023-01-01") & (events['created_at'] <= "2023-12-31")]
-    inventory_items = inventory_items[(inventory_items['created_at'] >= "2023-01-01") & (inventory_items['created_at'] <= "2023-12-31")]
+#     # 3. 2023 데이터만 필터링
+#     users = users[(users['created_at'] >= "2023-01-01") & (users['created_at'] <= "2023-12-31")]
+#     orders = orders[(orders['created_at'] >= "2023-01-01") & (orders['created_at'] <= "2023-12-31")]
+#     order_items = order_items[(order_items['created_at'] >= "2023-01-01") & (order_items['created_at'] <= "2023-12-31")]
+#     events = events[(events['created_at'] >= "2023-01-01") & (events['created_at'] <= "2023-12-31")]
+#     inventory_items = inventory_items[(inventory_items['created_at'] >= "2023-01-01") & (inventory_items['created_at'] <= "2023-12-31")]
 
-    return users, products, orders, order_items, events, inventory_items
+#     return users, products, orders, order_items, events, inventory_items
 
-users, products, orders, order_items, events, inventory_items = load_and_prepare_data("data/")
+# users, products, orders, order_items, events, inventory_items = load_and_prepare_data("data/")
 
 
 # ---------------- 사이드바 ----------------

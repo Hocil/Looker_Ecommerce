@@ -33,21 +33,21 @@ def load_all_data(base_path="./data/"):
         event_output_path = "temp_events.csv"  # 임시 파일명
         
         # gdown으로 파일 다운로드 (대용량 파일 경고 무시)
-        st.info("대용량 파일 'events.csv'를 다운로드 중입니다...")
+        # st.info("대용량 파일 'events.csv'를 다운로드 중입니다...")
         gdown.download(id=event_file_id, output=event_output_path, quiet=False)
         events = pd.read_csv(event_output_path)
         os.remove(event_output_path) # 다운로드 후 임시 파일 삭제
-        st.info("'events.csv' 로드 완료.")
+        # st.info("'events.csv' 로드 완료.")
 
         # (B) inventory_items.csv
         item_file_id = '1zMuGoJAMR5gQDJUwTdVGnRIGW5bpQ2pb'
         item_output_path = "temp_items.csv" # 임시 파일명
         
-        st.info("대용량 파일 'inventory_items.csv'를 다운로드 중입니다...")
+        # st.info("대용량 파일 'inventory_items.csv'를 다운로드 중입니다...")
         gdown.download(id=item_file_id, output=item_output_path, quiet=False)
         inventory_items = pd.read_csv(item_output_path)
         os.remove(item_output_path) # 다운로드 후 임시 파일 삭제
-        st.info("'inventory_items.csv' 로드 완료.")
+        # st.info("'inventory_items.csv' 로드 완료.")
   
 
         # 필요 없는 데이터프레임은 여기서 주석 처리하거나 삭제해도 됩니다.

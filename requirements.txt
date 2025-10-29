@@ -1,0 +1,24 @@
+streamlit==1.50.0
+retentioneering
+
+# Data Handling & Processing
+pandas==1.5.3
+numpy==1.26.4
+
+# Plotting & Visualization
+
+matplotlib==3.7.2
+seaborn==0.13.2
+plotly==6.3.0
+
+koreanize-matplotlib
+gdown
+
+
+
+
+
+
+
+
+

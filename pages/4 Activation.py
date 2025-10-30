@@ -673,9 +673,49 @@ with tab3:
             st.pyplot(fig)
 
         # -------------------- (2) 첫 구매까지 걸린 기간 분포 --------------------
+        # with g2:
+        #     fig, ax = plt.subplots(figsize=(4.5, 4))
+        #     n, bins, patches = ax.hist(
+        #         users_first_purchase["ttfp_days"],
+        #         bins=20,
+        #         color="#3CB371",
+        #         alpha=0.8,
+        #         edgecolor="white",
+        #         linewidth=0.6
+        #     )
+
+        #     ax.set_title("첫 구매까지 걸린 기간 분포", fontsize=12, fontweight="bold", pad=10)
+        #     ax.set_xlabel("소요일자 (일 단위)", fontsize=10)
+        #     ax.set_ylabel("고유 유저 수", fontsize=10)
+        #     ax.grid(axis="y", linestyle="--", alpha=0.4)
+
+        #     # 평균선 추가
+        #     mean_ttfp = users_first_purchase["ttfp_days"].mean()
+        #     ax.axvline(mean_ttfp, color="red", linestyle="--", linewidth=1.5)
+
+        #     # 👉 평균선 오른쪽으로 살짝 띄운 위치에 텍스트 표시
+        #     offset = (ax.get_xlim()[1] - ax.get_xlim()[0]) * 0.015  # 전체 x축의 1.5% 정도 오른쪽
+        #     ax.text(
+        #         mean_ttfp + offset,     
+        #         ax.get_ylim()[1] * 0.9,   
+        #         f"평균 {mean_ttfp:.1f}일",
+        #         color="red",
+        #         fontsize=9,
+        #         ha="left",
+        #         va="bottom",
+        #         fontweight="bold"
+        #     )
+
+        #     for spine in ["top", "right"]:
+        #         ax.spines[spine].set_visible(False)
+
+        #     plt.tight_layout()
+        #     st.pyplot(fig)
+
+
         with g2:
-            fig, ax = plt.subplots(figsize=(4.5, 4))
-            n, bins, patches = ax.hist(
+            fig, ax = plt.subplots(figsize=(4, 3.6))
+            ax.hist(
                 users_first_purchase["ttfp_days"],
                 bins=20,
                 color="#3CB371",
@@ -683,31 +723,11 @@ with tab3:
                 edgecolor="white",
                 linewidth=0.6
             )
-
-            ax.set_title("첫 구매까지 걸린 기간 분포", fontsize=12, fontweight="bold", pad=10)
-            ax.set_xlabel("소요일자 (일 단위)", fontsize=10)
-            ax.set_ylabel("고유 유저 수", fontsize=10)
-            ax.grid(axis="y", linestyle="--", alpha=0.4)
-
-            # 평균선 추가
             mean_ttfp = users_first_purchase["ttfp_days"].mean()
             ax.axvline(mean_ttfp, color="red", linestyle="--", linewidth=1.5)
-
-            # 👉 평균선 오른쪽으로 살짝 띄운 위치에 텍스트 표시
-            offset = (ax.get_xlim()[1] - ax.get_xlim()[0]) * 0.015  # 전체 x축의 1.5% 정도 오른쪽
-            ax.text(
-                mean_ttfp + offset,     
-                ax.get_ylim()[1] * 0.9,   
-                f"평균 {mean_ttfp:.1f}일",
-                color="red",
-                fontsize=9,
-                ha="left",
-                va="bottom",
-                fontweight="bold"
-            )
-
+            ax.text(mean_ttfp * 1.02, ax.get_ylim()[1] * 0.9, f"평균 {mean_ttfp:.1f}일",
+                    color="red", fontsize=9, fontweight="bold")
             for spine in ["top", "right"]:
                 ax.spines[spine].set_visible(False)
-
             plt.tight_layout()
-            st.pyplot(fig)
+            st.pyplot(fig, use_container_width=True, clear_figure=True)

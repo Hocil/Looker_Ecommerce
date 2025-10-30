@@ -341,7 +341,7 @@ with tab1:
     # ---------- 범례 (통합) ----------
     lines = l1 + l2
     labels = [line.get_label() for line in lines]
-    ax1.legend(lines, labels, loc="upper right", frameon=True, fontsize=9)
+    ax1.legend(lines, labels, loc="lower right", frameon=True, fontsize=9)
 
     # ---------- 미세 조정 ----------
     for spine in ["top", "right"]:

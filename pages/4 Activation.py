@@ -713,9 +713,31 @@ with tab3:
         #     st.pyplot(fig)
 
 
+        # with g2:
+        #     fig, ax = plt.subplots(figsize=(4, 3.6))
+        #     ax.hist(
+        #         users_first_purchase["ttfp_days"],
+        #         bins=20,
+        #         color="#3CB371",
+        #         alpha=0.8,
+        #         edgecolor="white",
+        #         linewidth=0.6
+        #     )
+        #     mean_ttfp = users_first_purchase["ttfp_days"].mean()
+        #     ax.axvline(mean_ttfp, color="red", linestyle="--", linewidth=1.5)
+        #     ax.text(mean_ttfp * 1.02, ax.get_ylim()[1] * 0.9, f"평균 {mean_ttfp:.1f}일",
+        #             color="red", fontsize=9, fontweight="bold")
+        #     for spine in ["top", "right"]:
+        #         ax.spines[spine].set_visible(False)
+        #     plt.tight_layout()
+        #     st.pyplot(fig, use_container_width=True, clear_figure=True)
+
         with g2:
-            fig, ax = plt.subplots(figsize=(4, 3.6))
-            ax.hist(
+        # -------------------- 첫 구매까지 걸린 기간 분포 --------------------
+            fig, ax = plt.subplots(figsize=(4, 3.8))  # 살짝 세로 여유를 줌 (3.6 → 3.8)
+
+            # 히스토그램
+            n, bins, patches = ax.hist(
                 users_first_purchase["ttfp_days"],
                 bins=20,
                 color="#3CB371",
@@ -723,11 +745,33 @@ with tab3:
                 edgecolor="white",
                 linewidth=0.6
             )
+
+            # 평균선
             mean_ttfp = users_first_purchase["ttfp_days"].mean()
             ax.axvline(mean_ttfp, color="red", linestyle="--", linewidth=1.5)
-            ax.text(mean_ttfp * 1.02, ax.get_ylim()[1] * 0.9, f"평균 {mean_ttfp:.1f}일",
-                    color="red", fontsize=9, fontweight="bold")
+
+            # 평균 텍스트
+            ax.text(
+                mean_ttfp * 1.02,
+                ax.get_ylim()[1] * 0.9,
+                f"평균 {mean_ttfp:.1f}일",
+                color="red",
+                fontsize=9,
+                fontweight="bold"
+            )
+
+            # 제목 + 축 라벨 + 그리드 다시 명시 (tight_layout 이후에도 유지됨)
+            ax.set_title("첫 구매까지 걸린 기간 분포", fontsize=12, fontweight="bold", pad=15)
+            ax.set_xlabel("소요일자 (일 단위)", fontsize=10, labelpad=8)
+            ax.set_ylabel("고유 유저 수", fontsize=10, labelpad=8)
+            ax.grid(axis="y", linestyle="--", alpha=0.4)
+
+            # 외곽선 정리
             for spine in ["top", "right"]:
                 ax.spines[spine].set_visible(False)
-            plt.tight_layout()
+
+            # 여백 확보 (tight_layout보다 조금 넉넉하게)
+            plt.subplots_adjust(top=0.88, bottom=0.18, left=0.15, right=0.97)
+
+            # Streamlit 표시
             st.pyplot(fig, use_container_width=True, clear_figure=True)

@@ -539,12 +539,12 @@ with tab2:
         plt.tight_layout()
         st.pyplot(fig)
 
-    # ----------------------------- 첫 구매 패턴 -----------------------------------
+# ----------------------------- 첫 구매 패턴 -----------------------------------
 with tab3:
     st.subheader("첫 구매 패턴 분석")
     st.info("사용자별 첫 구매 금액, 카테고리, 구매 시점 등을 시각화합니다.")
 
-    # CSS 스타일 정의 (텍스트 크게 + 중앙정렬)
+    # CSS 스타일
     st.markdown("""
         <style>
         .big-metric {
@@ -562,152 +562,82 @@ with tab3:
         </style>
     """, unsafe_allow_html=True)
 
-    # 레이아웃: 2열 구성
-    col1, col2 = st.columns([1, 3])  # 왼쪽 좁게(1), 오른쪽 넓게(3)
+    # 🔹 1단 구조: 왼쪽(KPI), 오른쪽(그래프 전체 컨테이너)
+    col1, col2 = st.columns([1, 3])
 
-    # 필터된 orders만 사용 (users_filtered와 조인)
-    filtered_orders = orders[orders["user_id"].isin(users_filtered["id"])]
-
-    # 유저별 첫 구매 기록 가져오기
-    first_orders = (
-        filtered_orders.loc[filtered_orders["status"].isin(valid_status)]
-        .sort_values("created_at")
-        .groupby("user_id")
-        .first()
-        .reset_index())
-
-    # 첫 구매 상품 정보
-    first_order_items = (
-        order_items.merge(
-            first_orders[["order_id", "user_id", "created_at"]],
-            on="order_id", how="inner"
-        )
-        .merge(products, left_on="product_id", right_on="id", how="left")
-    )
-
-    # 카테고리 필터 적용
-    first_order_items = first_order_items[first_order_items["category"].isin(category_filter)]
-
-
-    # 첫 구매 시점 (가입일 대비)
-    users_first_purchase = users_filtered.merge(
-        first_orders[["user_id", "created_at"]],
-        left_on="id", right_on="user_id", how="inner")
-    users_first_purchase["ttfp_days"] = (
-        (users_first_purchase["created_at_y"] - users_first_purchase["created_at_x"]).dt.days)
-
-    # ------------------- KPI 카드 -------------------
+    # 왼쪽 - KPI
     with col1:
-        avg_price = first_order_items["sale_price"].mean()
         median_price = first_order_items["sale_price"].median()
-
-        # st.markdown("<div class='big-metric'>Avg First Purchase</div>", unsafe_allow_html=True)
-        # st.markdown(f"<div class='big-value'>${avg_price:.2f}</div>", unsafe_allow_html=True)
-
         st.markdown("<div class='big-metric'>첫 구매 금액 (Middle, 50%)</div>", unsafe_allow_html=True)
         st.markdown(f"<div class='big-value'>${median_price:.2f}</div>", unsafe_allow_html=True)
 
-# ------------------- 그래프 (2개) 카테고리 TOP5, 첫구매 시점분포 -------------------
-
-    # 1. first_order_items 생성
-    first_order_items = (
-        order_items.merge(
-            first_orders[["order_id", "user_id", "created_at"]],
-            on="order_id", how="inner"
-        )
-        .merge(products, left_on="product_id", right_on="id", how="left")
-    )
-
-    # user_id 충돌 정리
-    if "user_id_x" in first_order_items.columns:
-        first_order_items["user_id"] = first_order_items["user_id_x"]
-    elif "user_id_y" in first_order_items.columns:
-        first_order_items["user_id"] = first_order_items["user_id_y"]
-
-    # 카테고리 필터 적용
-    first_order_items = first_order_items[first_order_items["category"].isin(category_filter)]
-
-    # 2. 시각화 영역
+    # 오른쪽 - 그래프 전체를 하나의 container로 묶기 (중첩 방지)
     with col2:
-        g1, g2 = st.columns(2)  # 왼쪽: TOP5 / 오른쪽: 첫 구매 시점 분포
+        graph_container = st.container()
 
-        # -------------------- (1) 카테고리 TOP5 --------------------
-        with g1:
-            category_counts = (
-                first_order_items.groupby("category")["user_id"]
-                .nunique()
-                .sort_values(ascending=False)
-                .head(5)
-            )
+        # 컨테이너 안에서만 col 분할
+        with graph_container:
+            left_col, right_col = st.columns(2)
 
-            fig, ax = plt.subplots(figsize=(4.5, 4))
-            bars = ax.bar(
-                category_counts.index,
-                category_counts.values,
-                color="royalblue",
-                alpha=0.85,
-                edgecolor="white",
-                linewidth=0.7
-            )
+            # -------------------- (1) 첫 구매 TOP5 카테고리 --------------------
+            with left_col:
+                category_counts = (
+                    first_order_items.groupby("category")["user_id"]
+                    .nunique()
+                    .sort_values(ascending=False)
+                    .head(5)
+                )
 
-            ax.set_title("첫 구매 상위 5개 카테고리", fontsize=12, fontweight="bold", pad=10)
-            ax.set_ylabel("고유 유저 수", fontsize=10)
-            ax.set_xlabel("카테고리", fontsize=10)
-            ax.grid(axis="y", linestyle="--", alpha=0.4)
+                fig, ax = plt.subplots(figsize=(4, 3.6))
+                bars = ax.bar(
+                    category_counts.index,
+                    category_counts.values,
+                    color="royalblue",
+                    alpha=0.85,
+                    edgecolor="white",
+                    linewidth=0.7
+                )
+                ax.set_title("첫 구매 상위 5개 카테고리", fontsize=12, fontweight="bold", pad=10)
+                ax.set_ylabel("고유 유저 수", fontsize=10)
+                ax.set_xlabel("카테고리", fontsize=10)
+                ax.grid(axis="y", linestyle="--", alpha=0.4)
+                ax.bar_label(
+                    bars,
+                    labels=[f"{v:,}" for v in category_counts.values],
+                    padding=3, fontsize=9, color="black", fontweight="bold"
+                )
+                plt.setp(ax.get_xticklabels(), rotation=30, ha="right", fontsize=9)
+                for spine in ["top", "right"]:
+                    ax.spines[spine].set_visible(False)
+                plt.tight_layout()
+                st.pyplot(fig, use_container_width=True, clear_figure=True)
 
-            # 값 표시 (bar_label 사용)
-            ax.bar_label(
-                bars,
-                labels=[f"{v:,}" for v in category_counts.values],
-                padding=3,
-                fontsize=9,
-                color="black",
-                fontweight="bold"
-            )
+            # -------------------- (2) 첫 구매까지 걸린 기간 분포 --------------------
+            with right_col:
+                fig, ax = plt.subplots(figsize=(4, 3.6))
+                n, bins, patches = ax.hist(
+                    users_first_purchase["ttfp_days"],
+                    bins=20,
+                    color="#3CB371",
+                    alpha=0.8,
+                    edgecolor="white",
+                    linewidth=0.6
+                )
 
-            plt.setp(ax.get_xticklabels(), rotation=30, ha="right", fontsize=9)
-            for spine in ["top", "right"]:
-                ax.spines[spine].set_visible(False)
+                mean_ttfp = users_first_purchase["ttfp_days"].mean()
+                ax.axvline(mean_ttfp, color="red", linestyle="--", linewidth=1.5)
+                ax.text(
+                    mean_ttfp * 1.02,
+                    ax.get_ylim()[1] * 0.9,
+                    f"평균 {mean_ttfp:.1f}일",
+                    color="red", fontsize=9, fontweight="bold"
+                )
 
-            plt.tight_layout()
-            st.pyplot(fig)
-
-        # -------------------- (2) 첫 구매까지 걸린 기간 분포 --------------------
-        with g2:
-            fig, ax = plt.subplots(figsize=(4.5, 4))
-            n, bins, patches = ax.hist(
-                users_first_purchase["ttfp_days"],
-                bins=20,
-                color="#3CB371",
-                alpha=0.8,
-                edgecolor="white",
-                linewidth=0.6
-            )
-
-            ax.set_title("첫 구매까지 걸린 기간 분포", fontsize=12, fontweight="bold", pad=10)
-            ax.set_xlabel("소요일자 (일 단위)", fontsize=10)
-            ax.set_ylabel("고유 유저 수", fontsize=10)
-            ax.grid(axis="y", linestyle="--", alpha=0.4)
-
-            # 평균선 추가
-            mean_ttfp = users_first_purchase["ttfp_days"].mean()
-            ax.axvline(mean_ttfp, color="red", linestyle="--", linewidth=1.5)
-
-            # 👉 평균선 오른쪽으로 살짝 띄운 위치에 텍스트 표시
-            offset = (ax.get_xlim()[1] - ax.get_xlim()[0]) * 0.015  # 전체 x축의 1.5% 정도 오른쪽
-            ax.text(
-                mean_ttfp + offset,     
-                ax.get_ylim()[1] * 0.9,   
-                f"평균 {mean_ttfp:.1f}일",
-                color="red",
-                fontsize=9,
-                ha="left",
-                va="bottom",
-                fontweight="bold"
-            )
-
-            for spine in ["top", "right"]:
-                ax.spines[spine].set_visible(False)
-
-            plt.tight_layout()
-            st.pyplot(fig)
+                ax.set_title("첫 구매까지 걸린 기간 분포", fontsize=12, fontweight="bold", pad=10)
+                ax.set_xlabel("소요일자 (일 단위)", fontsize=10)
+                ax.set_ylabel("고유 유저 수", fontsize=10)
+                ax.grid(axis="y", linestyle="--", alpha=0.4)
+                for spine in ["top", "right"]:
+                    ax.spines[spine].set_visible(False)
+                plt.tight_layout()
+                st.pyplot(fig, use_container_width=True, clear_figure=True)

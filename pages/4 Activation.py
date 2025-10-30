@@ -322,7 +322,7 @@ with tab1:
     # 활성 유저 수 라벨 (오른쪽 Y축)
     for i, v in enumerate(monthly_df["activated_users"]):
         ax2.text(
-            i, v + (v * 0.02),
+            i, v + (v * 0.004),
             f"{v:,}",
             ha="center", va="bottom",
             fontsize=8, color="royalblue", fontweight="bold"

@@ -629,13 +629,10 @@ with tab3:
 
     # 2. 시각화 영역
     with col2:
-        graph_container = st.container()  # 왼쪽: TOP5 / 오른쪽: 첫 구매 시점 분포
-
-        with graph_container:             # ✅ 내부에서 columns 생성
-        left_col, right_col = st.columns(2)
+        g1, g2 = st.columns(2)  # 왼쪽: TOP5 / 오른쪽: 첫 구매 시점 분포
 
         # -------------------- (1) 카테고리 TOP5 --------------------
-        with left_col:
+        with g1:
             category_counts = (
                 first_order_items.groupby("category")["user_id"]
                 .nunique()
@@ -676,7 +673,7 @@ with tab3:
             st.pyplot(fig)
 
         # -------------------- (2) 첫 구매까지 걸린 기간 분포 --------------------
-        with right_col:
+        with g2:
             fig, ax = plt.subplots(figsize=(4.5, 4))
             n, bins, patches = ax.hist(
                 users_first_purchase["ttfp_days"],

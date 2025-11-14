@@ -155,18 +155,6 @@ else:
 
         st.divider()
 
-        # # --- 분석 1 섹션 ---
-        # st.subheader("📊 분석 1: 유입 경로별 구매 전환율")
-        # with st.spinner('구매 전환율을 분석 중입니다...'):
-        #     conv_df, conv_fig = analyze_conversion_rate_by_source_2023(users, orders)
-        #     if conv_df is not None and conv_fig is not None:
-        #         st.write("유입 경로별 신규 가입자 수, 구매자 수, 구매 전환율을 나타냅니다.")
-
-        #         st.dataframe(conv_df.style.apply(highlight_top_rows, axis=1))
-        #         st.pyplot(conv_fig)
-
-        # st.divider()
-        
         st.subheader("유입 경로별 인구통계 상세 분석")
         st.write("특정 유입 경로를 통해 들어온 사용자들의 국가, 성별, 연령대 등 인구통계학적 특성을 상세히 분석합니다.")
 

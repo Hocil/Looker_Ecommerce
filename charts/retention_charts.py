@@ -626,10 +626,10 @@ def create_weekday_weekend_chart(orders_df, start_date, end_date):
         edgecolor='none'
     )
     
-    # y축 범위: 최소 0.08%는 보장하되, 실제 최대값보다 조금 여유 있게
-    max_rate = float(np.nanmax(g['Rate'])) if len(g) else 0.0
-    ymax = max(0.0008, max_rate * 1.1)  # 실제 값보다 10% 정도 여유
-    ax.set_ylim(0, ymax)
+    # # y축 범위: 최소 0.08%는 보장하되, 실제 최대값보다 조금 여유 있게
+    # max_rate = float(np.nanmax(g['Rate'])) if len(g) else 0.0
+    # ymax = max(0.0008, max_rate * 1.1)  # 실제 값보다 10% 정도 여유
+    # ax.set_ylim(0, ymax)
 
     # 눈금은 그대로 0.00%, 0.02%, 0.04%, 0.06%, 0.08% 유지
     ax.set_yticks([0.0, 0.0002, 0.0004, 0.0006, 0.0008])
@@ -645,22 +645,33 @@ def create_weekday_weekend_chart(orders_df, start_date, end_date):
     # # y축 범위/눈금 고정: 0.00% ~ 0.08% (0, 0.02, 0.04, 0.06, 0.08)
     # ax.set_ylim(0, 0.0008)
     # ax.set_yticks([0.0, 0.0002, 0.0004, 0.0006, 0.0008])
-    
+
+    # y축 범위: 최소 0.08%는 보장하되, 실제 최대값보다 조금 여유 있게
+    max_rate = float(np.nanmax(g['Rate'])) if len(g) else 0.0
+    ymax = max(0.0008, max_rate * 1.1)  # 실제 값보다 10% 정도 여유
+    ax.set_ylim(0, ymax)
+
+    # 눈금은 그대로 0.00%, 0.02%, 0.04%, 0.06%, 0.08% 유지
+    ax.set_yticks([0.0, 0.0002, 0.0004, 0.0006, 0.0008])
+
+    # 🔹 막대 안쪽에 라벨 넣기 (그래프 안에서 보이도록)
     for rect, r in zip(bars, g['Rate']):
         ax.annotate(
             f"{r*100:.3f}%",
             xy=(rect.get_x() + rect.get_width()/2, r),
-            # 🔽 막대 안쪽으로 10pt 내려서 그리기
-            xytext=(0, -10),
+            xytext=(0, -10),                # 아래쪽으로 10pt 내리기
             textcoords='offset points',
             ha='center',
-            va='top',      # 기준을 위쪽으로 바꿔서 안쪽에 붙이기
+            va='top',                       # 위를 기준으로 안쪽에 붙이기
         )
-                    
+
     ax.yaxis.set_major_formatter(PercentFormatter(xmax=1.0, decimals=2))
     ax.set_ylabel("재구매율 (%)")
     apply_common_style(fig, ax, title="주문일 기준 주중 vs 주말 재구매율 비교")
     fig.tight_layout()
+
+    return fig, tbl
+
 
     # # 막대 위 라벨: 소수 셋째 자리까지 0.074% 형태
     # for rect, r in zip(bars, g['Rate']):

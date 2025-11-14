@@ -36,137 +36,9 @@ def create_purchase_distribution_chart(order_items_df):
     
     return fig, purchase_dist
 
-# @st.cache_data
-# def create_retention_heatmap(order_items_df, show_annotations=True):
-#     """
-#     주문 데이터를 기반으로 코호트 리텐션 분석을 수행하고 히트맵을 생성합니다.
-#     """
-
-    
-#     # 'Complete' 상태인 주문만 필터링
-#     valid_orders = order_items_df[order_items_df['status'] == 'Complete'].copy()
-
-#     if valid_orders.empty:
-#         return None, None
-
-#     # --- 코호트 계산 로직 (제공해주신 코드 기반) ---
-#     valid_orders['order_month'] = valid_orders['created_at'].dt.to_period('M').dt.to_timestamp()
-    
-#     first_purchase = valid_orders.groupby('user_id')['order_month'].min().rename('order_month_cohort')
-#     valid_orders = valid_orders.join(first_purchase, on='user_id')
-    
-#     # 코호트 월이 없는 경우(join 실패) 데이터 제외
-#     valid_orders.dropna(subset=['order_month_cohort'], inplace=True)
-
-#     valid_orders['cohort_index'] = (
-#         (valid_orders['order_month'].dt.year - valid_orders['order_month_cohort'].dt.year) * 12 +
-#         (valid_orders['order_month'].dt.month - valid_orders['order_month_cohort'].dt.month)
-#     )
-    
-#     cohort_pivot = valid_orders.groupby(['order_month_cohort', 'cohort_index'])['user_id'].nunique().reset_index()
-    
-#     cohort_size = cohort_pivot[cohort_pivot['cohort_index'] == 0][['order_month_cohort', 'user_id']]
-#     cohort_pivot = cohort_pivot.merge(cohort_size, on='order_month_cohort', suffixes=('', '_cohort_size'))
-    
-#     cohort_pivot['retention'] = cohort_pivot['user_id'] / cohort_pivot['user_id_cohort_size']
-
-#     cohort_table = cohort_pivot.pivot_table(index="order_month_cohort",
-#                                             columns="cohort_index",
-#                                             values="retention")
-    
-
-#     # 1. 시각화할 데이터에서 첫 번째 열 (0개월차)을 제외합니다.
-#     # .iloc[:, 1:]는 모든 행과, 1번 인덱스(두 번째) 열부터 끝까지의 열을 선택합니다.
-#     heatmap_data = cohort_table.iloc[:, 1:]
-
-#     # 2. 주석(annot) 데이터도 동일하게 첫 번째 열을 제외하고 생성합니다.
-#     annot_data = None
-#     if show_annotations:
-#         annot_data = heatmap_data.copy()
-#         annot_data[annot_data == 0] = np.nan
-
-#     # --- Matplotlib 히트맵 생성 ---
-#     fig, ax = plt.subplots(figsize=(14, 8))
-    
-#     sns.heatmap(
-#         data=heatmap_data,         # ✨ 수정: 슬라이싱된 데이터를 사용
-#         annot=annot_data,          # ✨ 수정: 슬라이싱된 주석 데이터를 사용
-#         fmt=".1%",
-#         cmap=SEQUENTIAL_PALETTE, 
-#         linewidths=.5,
-#         ax=ax
-#     )
-    
-#     ax.set_ylabel("첫 구매월 (Cohort)", fontsize=12)
-#     ax.set_xlabel("재구매까지 걸린 개월 수", fontsize=12)
-    
-#     # Y축 날짜 포맷 변경
-#     ax.set_yticklabels([d.strftime('%Y-%m') for d in cohort_table.index])
-    
-#     fig.tight_layout()
-#     apply_common_style(fig, ax, title="고객 리텐션 코호트 분석 히트맵")
-    
-#     return fig, cohort_table
-
-
-# def create_category_cohort_heatmap(order_items_df, products_df, category, show_annotations=True):
-#     """
-#     선택된 카테고리를 기준으로 코호트 리텐션 히트맵을 생성합니다.
-#     """
-#     # 'Complete' 상태인 주문만 필터링
-#     valid_orders = order_items_df[order_items_df['status'] == 'Complete'].copy()
-
-#     orders_with_products = valid_orders.merge(
-#         products_df[['id', 'category']],
-#         left_on='product_id',
-#         right_on='id',
-#         how='left'
-#     )
-#     category_orders = orders_with_products[orders_with_products['category'] == category].copy()
-    
-#     if category_orders.empty:
-#         return None, None
-    
-#     category_orders['created_at'] = category_orders['created_at'].dt.tz_localize(None)
-#     category_orders['order_month'] = category_orders['created_at'].dt.to_period('M').dt.to_timestamp()
-    
-#     first_purchase = category_orders.groupby('user_id')['order_month'].min().rename('order_month_cohort')
-#     category_orders = category_orders.join(first_purchase, on='user_id')
-#     category_orders.dropna(subset=['order_month_cohort'], inplace=True)
-    
-#     # ✨ 수정: 연도 필터링 로직 제거
-#     # category_orders = category_orders[category_orders['order_month_cohort'].dt.year == year]
-
-#     if category_orders.empty:
-#         return None, None
-
-#     category_orders['cohort_index'] = ((category_orders['order_month'].dt.year - category_orders['order_month_cohort'].dt.year) * 12 + (category_orders['order_month'].dt.month - category_orders['order_month_cohort'].dt.month))
-    
-#     cohort_pivot = category_orders.groupby(['order_month_cohort', 'cohort_index'])['user_id'].nunique().reset_index()
-#     cohort_size = cohort_pivot[cohort_pivot['cohort_index'] == 0][['order_month_cohort', 'user_id']]
-#     cohort_pivot = cohort_pivot.merge(cohort_size, on='order_month_cohort', suffixes=('', '_cohort_size'))
-#     cohort_pivot['retention'] = cohort_pivot['user_id'] / cohort_pivot['user_id_cohort_size']
-#     cohort_table = cohort_pivot.pivot_table(index="order_month_cohort", columns="cohort_index", values="retention")
-
-#     heatmap_data = cohort_table.iloc[:, 1:]
-    
-#     annot_data = None
-#     if show_annotations:
-#         annot_data = heatmap_data.copy()
-#         annot_data[annot_data == 0] = np.nan
-
-#     fig, ax = plt.subplots(figsize=(14, 8))
-#     sns.heatmap(data=heatmap_data, annot=annot_data, fmt=".1%", cmap=SEQUENTIAL_PALETTE, linewidths=.5, ax=ax)
-    
-#     ax.set_ylabel("첫 구매월 (Cohort)", fontsize=12)
-#     ax.set_xlabel("재구매까지 걸린 개월 수", fontsize=12)
-#     ax.set_yticklabels([d.strftime('%Y-%m') for d in heatmap_data.index])
-#     fig.tight_layout()
-    
-#     return fig, cohort_table
 
 @st.cache_data
-# ✨ 수정: year 파라미터 제거
+# 수정: year 파라미터 제거
 def create_advanced_cohort_heatmap(orders_df, max_age_m, show_annotations=True):
     """
     정교한 방식으로 코호트 재구매율을 계산하고 히트맵을 생성합니다.
@@ -203,7 +75,7 @@ def create_advanced_cohort_heatmap(orders_df, max_age_m, show_annotations=True):
 
     first_2023 = first[first['cohort_year'] == 2023].copy()
     
-    # ✨ 수정: 연도 필터링 로직 제거 (모든 코호트 사용)
+    # 수정: 연도 필터링 로직 제거 (모든 코호트 사용)
     # first_year = first[first['cohort_year'] == year].copy()
     # if first_year.empty: ...
         
@@ -222,7 +94,7 @@ def create_advanced_cohort_heatmap(orders_df, max_age_m, show_annotations=True):
     lab['cohort_age_m'] = om_i - cm_i
     lab = lab[(lab['cohort_age_m'] >= 0) & (lab['cohort_age_m'] <= max_age_m)].copy()
 
-    cohort_months = np.sort(first_2023['cohort_month'].unique()) # ✨ 수정: 2023년 데이터만 사용
+    cohort_months = np.sort(first_2023['cohort_month'].unique()) # 2023년 데이터만 사용
     age_vals = np.arange(0, max_age_m + 1)
     grid = pd.MultiIndex.from_product([cohort_months, age_vals], names=['cohort_month','cohort_age_m']).to_frame(index=False)
     grid['cm_i'] = grid['cohort_month'].dt.year * 12 + grid['cohort_month'].dt.month
@@ -250,6 +122,16 @@ def create_advanced_cohort_heatmap(orders_df, max_age_m, show_annotations=True):
 
     # 히트맵 시각화
     fig, ax = plt.subplots(figsize=(12, max(4, 0.6 * len(heat_pct.index))))
+    # sns.heatmap(
+    #     heat_pct, annot=show_annotations, fmt=".1f", cmap=SEQUENTIAL_PALETTE,
+    #     cbar_kws={'label': '재구매율 (%)'}, linewidths=.3, linecolor='white', ax=ax
+    # )
+    # ax.set_xlabel("첫 구매 후 경과 개월 수")
+    # ax.set_ylabel("코호트 월 (첫 구매월 · N=표본크기)")
+    # ax.set_yticklabels(ax.get_yticklabels(), rotation=0)
+    # apply_common_style(fig, ax, title="월별 코호트 재구매율 히트맵 (Age≥1)")
+    # fig.tight_layout()
+
     sns.heatmap(
         heat_pct, annot=show_annotations, fmt=".1f", cmap=SEQUENTIAL_PALETTE,
         cbar_kws={'label': '재구매율 (%)'}, linewidths=.3, linecolor='white', ax=ax
@@ -257,7 +139,8 @@ def create_advanced_cohort_heatmap(orders_df, max_age_m, show_annotations=True):
     ax.set_xlabel("첫 구매 후 경과 개월 수")
     ax.set_ylabel("코호트 월 (첫 구매월 · N=표본크기)")
     ax.set_yticklabels(ax.get_yticklabels(), rotation=0)
-    apply_common_style(fig, ax, title="월별 코호트 재구매율 히트맵 (Age≥1)")
+    # 제목에 2023년 명시
+    apply_common_style(fig, ax, title="2023년 월별 코호트 재구매율 히트맵 (Age≥1)")
     fig.tight_layout()
 
     return fig, heat
@@ -273,7 +156,7 @@ def create_repeat_purchaser_chart(orders_df):
     orders['created_at'] = pd.to_datetime(orders['created_at'], utc=True, errors='coerce')
     orders = orders.dropna(subset=['created_at'])
     if 'status' in orders.columns:
-        # --- ✨ 수정: 필터링할 주문 상태 확장 ---
+        # --- 수정: 필터링할 주문 상태 확장 ---
         orders['status'] = orders['status'].astype(str).str.strip().str.lower()
         orders = orders[orders['status'] == 'complete'].drop(columns=['status'])
     if orders.empty:
@@ -291,7 +174,7 @@ def create_repeat_purchaser_chart(orders_df):
     by_month['rate_raw'] = by_month['returning_users'] / by_month['purchasers']
     by_month['repeat_purchaser_rate'] = by_month['rate_raw'].round(3)
 
-    # ✨ 수정: 2023년으로 연도 고정
+    # 수정: 2023년으로 연도 고정
     m2023 = by_month.loc[by_month.index.year == 2023].copy()
     if m2023.empty:
         st.warning("2023년 데이터가 없습니다.")
@@ -335,87 +218,86 @@ def create_repeat_purchaser_chart(orders_df):
 
     return fig, m2023
 
-@st.cache_data
-def create_weekly_cohort_heatmap(orders_df, selected_month, max_age_w, show_annotations=True):
-    """
-    선택된 월에 시작된 주간 코호트의 재구매율을 분석하고 히트맵을 생성합니다.
-    """
-    # --- 제공해주신 코드 로직을 스트림릿 함수에 맞게 수정 ---
+# @st.cache_data
+# def create_weekly_cohort_heatmap(orders_df, selected_month, max_age_w, show_annotations=True):
+#     """
+#     선택된 월에 시작된 주간 코호트의 재구매율을 분석하고 히트맵을 생성합니다.
+#     """
     
-    # 0) 원천 정리
-    use_cols = [c for c in ['user_id', 'created_at', 'status'] if c in orders_df.columns]
-    src = orders_df.loc[:, use_cols].copy()
-    src = src[src['user_id'].notna()].copy()
-    src['created_at'] = pd.to_datetime(src['created_at'], utc=True, errors='coerce')
-    src = src.dropna(subset=['created_at']).sort_values(['user_id','created_at'])
-    if 'status' in src.columns:
-        # --- ✨ 수정: 필터링할 주문 상태 확장 ---
-        src['status'] = src['status'].astype(str).str.strip().str.lower()
-        src = src[src['status'] == 'complete']
-    if src.empty:
-        st.warning("상태가 'Complete'인 주문이 없습니다.")
-        return None, None
-    REF = pd.Timestamp('1970-01-05', tz='UTC')
-    src['week_start'] = src['created_at'].dt.normalize() - pd.to_timedelta(src['created_at'].dt.dayofweek, unit='D')
-    src['week_idx'] = ((src['week_start'] - REF).dt.days // 7).astype(int)
-    last_week_idx = int(src['week_idx'].max())
+#     # 0) 원천 정리
+#     use_cols = [c for c in ['user_id', 'created_at', 'status'] if c in orders_df.columns]
+#     src = orders_df.loc[:, use_cols].copy()
+#     src = src[src['user_id'].notna()].copy()
+#     src['created_at'] = pd.to_datetime(src['created_at'], utc=True, errors='coerce')
+#     src = src.dropna(subset=['created_at']).sort_values(['user_id','created_at'])
+#     if 'status' in src.columns:
+#         # --- 수정: 필터링할 주문 상태 확장 ---
+#         src['status'] = src['status'].astype(str).str.strip().str.lower()
+#         src = src[src['status'] == 'complete']
+#     if src.empty:
+#         st.warning("상태가 'Complete'인 주문이 없습니다.")
+#         return None, None
+#     REF = pd.Timestamp('1970-01-05', tz='UTC')
+#     src['week_start'] = src['created_at'].dt.normalize() - pd.to_timedelta(src['created_at'].dt.dayofweek, unit='D')
+#     src['week_idx'] = ((src['week_start'] - REF).dt.days // 7).astype(int)
+#     last_week_idx = int(src['week_idx'].max())
 
-    # 1) 첫 구매(코호트) 계산
-    first = src.groupby('user_id', as_index=False)['created_at'].min().rename(columns={'created_at':'first_time'})
-    first['cohort_week_start'] = first['first_time'].dt.normalize() - pd.to_timedelta(first['first_time'].dt.dayofweek, unit='D')
-    first['cohort_week_idx'] = ((first['cohort_week_start'] - REF).dt.days // 7).astype(int)
-    first['cohort_month'] = first['cohort_week_start'].dt.to_period('M').astype(str)
+#     # 1) 첫 구매(코호트) 계산
+#     first = src.groupby('user_id', as_index=False)['created_at'].min().rename(columns={'created_at':'first_time'})
+#     first['cohort_week_start'] = first['first_time'].dt.normalize() - pd.to_timedelta(first['first_time'].dt.dayofweek, unit='D')
+#     first['cohort_week_idx'] = ((first['cohort_week_start'] - REF).dt.days // 7).astype(int)
+#     first['cohort_month'] = first['cohort_week_start'].dt.to_period('M').astype(str)
 
-    # ✨ 수정: 선택된 월의 코호트만 필터링
-    cohorts_in_month = first[first['cohort_month'] == selected_month].copy()
-    if cohorts_in_month.empty:
-        st.warning(f"{selected_month}에 시작된 코호트 그룹이 없습니다.")
-        return None, None
+#     # 수정: 선택된 월의 코호트만 필터링
+#     cohorts_in_month = first[first['cohort_month'] == selected_month].copy()
+#     if cohorts_in_month.empty:
+#         st.warning(f"{selected_month}에 시작된 코호트 그룹이 없습니다.")
+#         return None, None
 
-    # 라벨 생성
-    iso = cohorts_in_month['cohort_week_start'].dt.isocalendar()
-    cohorts_in_month['cohort_week_lbl'] = iso['year'].astype(str) + '-W' + iso['week'].astype(str).str.zfill(2)
-    cohorts_in_month['week_of_month'] = ((cohorts_in_month['cohort_week_start'].dt.day - 1) // 7 + 1).astype(int)
-    cohorts_in_month['cohort_mweek_lbl'] = (cohorts_in_month['cohort_month'] + ' W' + cohorts_in_month['week_of_month'].astype(str) + ' (' + cohorts_in_month['cohort_week_lbl'] + ')')
+#     # 라벨 생성
+#     iso = cohorts_in_month['cohort_week_start'].dt.isocalendar()
+#     cohorts_in_month['cohort_week_lbl'] = iso['year'].astype(str) + '-W' + iso['week'].astype(str).str.zfill(2)
+#     cohorts_in_month['week_of_month'] = ((cohorts_in_month['cohort_week_start'].dt.day - 1) // 7 + 1).astype(int)
+#     cohorts_in_month['cohort_mweek_lbl'] = (cohorts_in_month['cohort_month'] + ' W' + cohorts_in_month['week_of_month'].astype(str) + ' (' + cohorts_in_month['cohort_week_lbl'] + ')')
     
-    cohort_size = cohorts_in_month.groupby('cohort_week_idx')['user_id'].nunique().rename('cohort_size')
+#     cohort_size = cohorts_in_month.groupby('cohort_week_idx')['user_id'].nunique().rename('cohort_size')
 
-    # (이하 계산 로직은 이전과 동일하나, 'cohorts_in_month'를 사용)
-    lab = src.merge(cohorts_in_month[['user_id','cohort_week_idx']], on='user_id', how='inner')
-    if lab.empty: return None, None
-    lab['age_w'] = lab['week_idx'] - lab['cohort_week_idx']
-    lab = lab[(lab['age_w'] >= 0) & (lab['age_w'] <= max_age_w)].copy()
-    cohort_weeks = np.sort(cohorts_in_month['cohort_week_idx'].unique())
-    age_vals = np.arange(0, max_age_w+1)
-    grid = pd.MultiIndex.from_product([cohort_weeks, age_vals], names=['cohort_week_idx','age_w']).to_frame(index=False)
-    grid = grid[(grid['cohort_week_idx'] + grid['age_w']) <= last_week_idx].copy()
-    counts = lab.groupby(['cohort_week_idx','age_w'])['user_id'].nunique().rename('active_users').reset_index()
-    counts = grid.merge(counts, on=['cohort_week_idx','age_w'], how='left').fillna({'active_users':0})
-    counts = counts.merge(cohort_size, on='cohort_week_idx', how='left')
-    counts['retention_rate'] = counts['active_users'] / counts['cohort_size']
-    heat = counts.pivot(index='cohort_week_idx', columns='age_w', values='retention_rate').sort_index().sort_index(axis=1)
-    if 0 in heat.columns:
-        heat = heat.loc[:, heat.columns != 0]
-    lbl_map = (cohorts_in_month[['cohort_week_idx','cohort_mweek_lbl']].drop_duplicates().set_index('cohort_week_idx')['cohort_mweek_lbl'])
-    cohort_idx = heat.index.copy()
-    base_labels = cohort_idx.map(lbl_map)
-    n_map = cohort_size.reindex(cohort_idx).fillna(0).astype(int).map(lambda x: f"{x:,}")
-    row_labels = base_labels + ' · N=' + n_map
-    heat.index = row_labels
-    heat_pct = heat * 100
+#     # (이하 계산 로직은 이전과 동일하나, 'cohorts_in_month'를 사용)
+#     lab = src.merge(cohorts_in_month[['user_id','cohort_week_idx']], on='user_id', how='inner')
+#     if lab.empty: return None, None
+#     lab['age_w'] = lab['week_idx'] - lab['cohort_week_idx']
+#     lab = lab[(lab['age_w'] >= 0) & (lab['age_w'] <= max_age_w)].copy()
+#     cohort_weeks = np.sort(cohorts_in_month['cohort_week_idx'].unique())
+#     age_vals = np.arange(0, max_age_w+1)
+#     grid = pd.MultiIndex.from_product([cohort_weeks, age_vals], names=['cohort_week_idx','age_w']).to_frame(index=False)
+#     grid = grid[(grid['cohort_week_idx'] + grid['age_w']) <= last_week_idx].copy()
+#     counts = lab.groupby(['cohort_week_idx','age_w'])['user_id'].nunique().rename('active_users').reset_index()
+#     counts = grid.merge(counts, on=['cohort_week_idx','age_w'], how='left').fillna({'active_users':0})
+#     counts = counts.merge(cohort_size, on='cohort_week_idx', how='left')
+#     counts['retention_rate'] = counts['active_users'] / counts['cohort_size']
+#     heat = counts.pivot(index='cohort_week_idx', columns='age_w', values='retention_rate').sort_index().sort_index(axis=1)
+#     if 0 in heat.columns:
+#         heat = heat.loc[:, heat.columns != 0]
+#     lbl_map = (cohorts_in_month[['cohort_week_idx','cohort_mweek_lbl']].drop_duplicates().set_index('cohort_week_idx')['cohort_mweek_lbl'])
+#     cohort_idx = heat.index.copy()
+#     base_labels = cohort_idx.map(lbl_map)
+#     n_map = cohort_size.reindex(cohort_idx).fillna(0).astype(int).map(lambda x: f"{x:,}")
+#     row_labels = base_labels + ' · N=' + n_map
+#     heat.index = row_labels
+#     heat_pct = heat * 100
 
-    # 히트맵 시각화
-    fig, ax = plt.subplots(figsize=(12, max(4, 0.7 * len(heat_pct))))
-    sns.heatmap(
-        heat_pct, annot=show_annotations, fmt=".1f", cmap=SEQUENTIAL_PALETTE,
-        cbar_kws={'label':'재구매율 (%)'}, linewidths=.3, linecolor='white', ax=ax)
-    ax.set_xlabel("첫 구매 후 경과 주 수")
-    ax.set_ylabel("코호트 주 (YYYY-MM Wn (ISO 주) · N)")
-    ax.set_yticklabels(ax.get_yticklabels(), rotation=0)
-    apply_common_style(fig, ax, title=f"{selected_month} 시작 주간 코호트 재구매율 (Age≥1)")
-    fig.tight_layout()
+#     # 히트맵 시각화
+#     fig, ax = plt.subplots(figsize=(12, max(4, 0.7 * len(heat_pct))))
+#     sns.heatmap(
+#         heat_pct, annot=show_annotations, fmt=".1f", cmap=SEQUENTIAL_PALETTE,
+#         cbar_kws={'label':'재구매율 (%)'}, linewidths=.3, linecolor='white', ax=ax)
+#     ax.set_xlabel("첫 구매 후 경과 주 수")
+#     ax.set_ylabel("코호트 주 (YYYY-MM Wn (ISO 주) · N)")
+#     ax.set_yticklabels(ax.get_yticklabels(), rotation=0)
+#     apply_common_style(fig, ax, title=f"{selected_month} 시작 주간 코호트 재구매율 (Age≥1)")
+#     fig.tight_layout()
 
-    return fig, heat
+#     return fig, heat
 
 @st.cache_data
 def create_daily_cohort_heatmap(orders_df, selected_month, selected_week, max_age_d, show_annotations=True):
@@ -449,11 +331,7 @@ def create_daily_cohort_heatmap(orders_df, selected_month, selected_week, max_ag
     first_2023 = first[first['cohort_day'].dt.year == 2023].copy()
     first['cohort_month'] = first['cohort_day'].dt.to_period('M').astype(str)
     
-    # # 주차(Week of Month) 계산
-    # week_start_day = first['cohort_day'].dt.normalize() - pd.to_timedelta(first['cohort_day'].dt.dayofweek, unit='D')
-    # first['cohort_week_of_month'] = ((week_start_day.dt.day - 1) // 7 + 1)
-
-    # ✨ 수정: 선택된 월/주로 코호트 필터링
+    # 수정: 선택된 월/주로 코호트 필터링
     cohorts_filtered = first_2023[first_2023['cohort_month'] == selected_month]
     if selected_week != 'All':
         cohorts_filtered = cohorts_filtered[cohorts_filtered['cohort_week_of_month'] == selected_week]
@@ -503,11 +381,9 @@ def create_daily_cohort_heatmap(orders_df, selected_month, selected_week, max_ag
     heat.index = base_lbl + ' · N=' + n_map
     heat_pct = heat * 100
 
-    # --- ✨✨ 수정된 시각화 부분 ✨✨ ---
-
     # Figure 높이 동적 조절 (행당 할당 높이를 1.2로 대폭 증가)
     base_height = 8
-    row_height_factor = 1.2  # ✨ 수정: 각 행의 높이를 더욱 확보
+    row_height_factor = 1.2  # 수정: 각 행의 높이를 더욱 확보
     fig_h = max(base_height, len(heat_pct.index) * row_height_factor)
     
     # Figure 너비 동적 조절
@@ -531,7 +407,7 @@ def create_daily_cohort_heatmap(orders_df, selected_month, selected_week, max_ag
         linecolor='white',
         cbar_kws={'label': '재구매율 (%)'}, 
         ax=ax,
-        # ✨ 수정: annot_kws를 사용하여 annotation 글꼴 크기를 14로 대폭 증가
+        # 수정: annot_kws를 사용하여 annotation 글꼴 크기를 14로 증가
         annot_kws={"fontsize": 20} 
     )
     ax.set_xlabel(f"첫 구매 후 경과 일 수 ({min_age_d}–{max_age_d})", fontsize=30)
@@ -542,9 +418,6 @@ def create_daily_cohort_heatmap(orders_df, selected_month, selected_week, max_ag
     fig.tight_layout()
 
     return fig, heat
-
-
-# --- ✨ [함수 추가] 요일별 재구매 분석 ---
 
 # --- Helper 함수들 (분석 함수 내부에 포함시키거나 전역으로 둠) ---
 def fmt_pct3(x):
@@ -645,16 +518,6 @@ def create_weekday_repeat_purchase_charts(orders_df, start_date, end_date):
     x = np.arange(7)
     week_labels = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
 
-    # # Plot 1: Order bars
-    # ax_bars_ord.bar(x, order_grp['Repeat_Orders'], color=PRIMARY_COLOR, alpha=0.9)
-    # ax_bars_ord.set(ylabel="재구매 건수", xticks=x, xticklabels=week_labels)
-    # apply_common_style(fig, ax_bars_ord, title="재구매 발생 요일 분포")
-
-    # # Plot 2: Cohort bars
-    # ax_bars_coh.bar(x, cohort_grp['Repeat_Orders'], color=ACCENT_COLOR_2, alpha=0.9)
-    # ax_bars_coh.set(ylabel="재구매 건수", xticks=x, xticklabels=week_labels)
-    # apply_common_style(fig, ax_bars_coh, title="첫 구매 요일별 재구매 건수")
-
     # Plot 3: Combined lines
     ax_line_both.plot(x, order_grp['Repeat_Rate'], marker='o', color=PRIMARY_COLOR, label='재구매일 기준')
     ax_line_both.plot(x, cohort_grp['Repeat_Rate'], marker='o', color=ACCENT_COLOR_2, label='첫구매일 기준')
@@ -665,7 +528,6 @@ def create_weekday_repeat_purchase_charts(orders_df, start_date, end_date):
     apply_common_style(fig, ax_line_both, title="요일별 재구매율")
     
     return fig, order_grp, cohort_grp
-
 
 # Helper 함수들
 def fmt_pct3(x):
@@ -679,9 +541,7 @@ def create_weekday_weekend_chart(orders_df, start_date, end_date):
     """
     # (앞부분 로직은 동일)
     use_cols = [c for c in ['user_id','created_at','status'] if c in orders_df.columns]
-    # if not use_cols or 'user_id' not in use_cols or 'created_at' not in use_cols:
-    #     st.warning("분석에 필요한 'user_id', 'created_at' 컬럼이 데이터에 없습니다.")
-    #     return None, None
+
     src = orders_df.loc[:, use_cols].copy()
     src = src[src['user_id'].notna()]
     src['status'] = src['status'].astype(str).str.strip().str.lower()
@@ -745,35 +605,83 @@ def create_weekday_weekend_chart(orders_df, start_date, end_date):
     g = (df.groupby('is_weekend', as_index=False)
            .agg(Repeaters=('active_users','sum'), Exposure=('cohort_size','sum')))
     g['Rate'] = np.where(g['Exposure']>0, g['Repeaters']/g['Exposure'], np.nan)
-    g['Group'] = np.where(g['is_weekend'], '주말 (토+일)', '주중 (월–금)')
+    # ✨ 표/그래프 라벨: 토+일 -> 토-일
+    g['Group'] = np.where(g['is_weekend'], '주말 (토-일)', '주중 (월-금)')
     g = g.sort_values('is_weekend').reset_index(drop=True)
 
-    # 테이블 생성
+    # ✨ 테이블 생성: 재구매율 소수 셋째 자리까지
     tbl = pd.DataFrame({
         '구분': g['Group'],
         '재구매자 수': g['Repeaters'].astype(int),
         '전체 코호트 크기': g['Exposure'].astype(int),
-        '재구매율 (%)': (g['Rate']*100).round(3)
+        '재구매율 (%)': (g['Rate']*100).round(3)   # 예: 0.074, 0.083
     })
 
-    # 막대 차트 생성
+    # ✨ 막대 차트 생성 (파랑 + 하늘색 계열 가정)
     fig, ax = plt.subplots(figsize=(7, 5))
-    bars = ax.bar(g['Group'], g['Rate'], color=[PRIMARY_COLOR, SECONDARY_COLOR], edgecolor='none')
+    bars = ax.bar(
+        g['Group'],
+        g['Rate'],
+        color=[PRIMARY_COLOR, HIGHLIGHT_COLOR],  # SECONDARY_COLOR 대신 HIGHLIGHT_COLOR 사용
+        edgecolor='none'
+    )
     
-    ymax = float(np.nanmax(g['Rate'])) if len(g) else 0.0
-    pad = ymax * 0.15 if ymax > 0 else 0.01
-    ax.set_ylim(0, ymax + pad)
+    # ✨ y축 범위/눈금 고정: 0.00% ~ 0.08% (0, 0.02, 0.04, 0.06, 0.08)
+    ax.set_ylim(0, 0.0008)
+    ax.set_yticks([0.0, 0.0002, 0.0004, 0.0006, 0.0008])
 
+    # ✨ 막대 위 라벨: 소수 셋째 자리까지 0.074% 형태
     for rect, r in zip(bars, g['Rate']):
-        ax.annotate(f"{r*100:.2f}%", xy=(rect.get_x() + rect.get_width()/2, r),
-                    xytext=(0, 6), textcoords='offset points', ha='center', va='bottom')
+        ax.annotate(
+            f"{r*100:.3f}%",
+            xy=(rect.get_x() + rect.get_width()/2, r),
+            xytext=(0, 6),
+            textcoords='offset points',
+            ha='center',
+            va='bottom'
+        )
                     
-    ax.yaxis.set_major_formatter(PercentFormatter(xmax=1.0, decimals=1))
+    # ✨ y축 포맷: 0.00%, 0.02% ... 형식
+    ax.yaxis.set_major_formatter(PercentFormatter(xmax=1.0, decimals=2))
     ax.set_ylabel("재구매율 (%)")
-    apply_common_style(fig, ax, title="주중 vs 주말 재구매율 비교 (Age ≥ 1)")
+    # ✨ 제목도 주문일 기준 문구로 통일
+    apply_common_style(fig, ax, title="주문일 기준 주중 vs 주말 재구매율 비교")
     fig.tight_layout()
 
     return fig, tbl
+
+    # g = (df.groupby('is_weekend', as_index=False)
+    #        .agg(Repeaters=('active_users','sum'), Exposure=('cohort_size','sum')))
+    # g['Rate'] = np.where(g['Exposure']>0, g['Repeaters']/g['Exposure'], np.nan)
+    # g['Group'] = np.where(g['is_weekend'], '주말 (토+일)', '주중 (월–금)')
+    # g = g.sort_values('is_weekend').reset_index(drop=True)
+
+    # # 테이블 생성
+    # tbl = pd.DataFrame({
+    #     '구분': g['Group'],
+    #     '재구매자 수': g['Repeaters'].astype(int),
+    #     '전체 코호트 크기': g['Exposure'].astype(int),
+    #     '재구매율 (%)': (g['Rate']*100).round(3)
+    # })
+
+    # # 막대 차트 생성
+    # fig, ax = plt.subplots(figsize=(7, 5))
+    # bars = ax.bar(g['Group'], g['Rate'], color=[PRIMARY_COLOR, SECONDARY_COLOR], edgecolor='none')
+    
+    # ymax = float(np.nanmax(g['Rate'])) if len(g) else 0.0
+    # pad = ymax * 0.15 if ymax > 0 else 0.01
+    # ax.set_ylim(0, ymax + pad)
+
+    # for rect, r in zip(bars, g['Rate']):
+    #     ax.annotate(f"{r*100:.2f}%", xy=(rect.get_x() + rect.get_width()/2, r),
+    #                 xytext=(0, 6), textcoords='offset points', ha='center', va='bottom')
+                    
+    # ax.yaxis.set_major_formatter(PercentFormatter(xmax=1.0, decimals=1))
+    # ax.set_ylabel("재구매율 (%)")
+    # apply_common_style(fig, ax, title="주중 vs 주말 재구매율 비교 (Age ≥ 1)")
+    # fig.tight_layout()
+
+    # return fig, tbl
 
 
 @st.cache_data
@@ -828,7 +736,7 @@ def create_weekly_cohort_heatmap(orders_df, selected_month, selected_week, max_a
         raise ValueError(f"{2023}년 주 코호트가 없습니다. (status=='Complete' 기준)")
 
     
-    # ✨ 수정: 선택된 월/주로 코호트 필터링
+    # 수정: 선택된 월/주로 코호트 필터링
     cohorts_filtered = first_2023[first_2023['cohort_month'] == selected_month]
     if selected_week != 'All':
         cohorts_filtered = cohorts_filtered[cohorts_filtered['week_of_month'] == selected_week]
@@ -873,7 +781,19 @@ def create_weekly_cohort_heatmap(orders_df, selected_month, selected_week, max_a
     ax.set_xlabel("첫 구매 후 경과 주 수")
     ax.set_ylabel("코호트 주 (YYYY-MM Wn (ISO 주) · N)")
     ax.set_yticklabels(ax.get_yticklabels(), rotation=0)
-    apply_common_style(fig, ax, title=f"{selected_month} (W{selected_week if selected_week != 'All' else '전체'}) 주간 코호트 재구매율")
+    # 제목을 피드백에 맞게 단순화 진행
+    apply_common_style(fig, ax, title="2023년 주간 코호트 재구매율 히트맵")
     fig.tight_layout()
 
     return fig, heat
+
+    # sns.heatmap(
+    #     heat_pct, annot=show_annotations, fmt=".1f", cmap=SEQUENTIAL_PALETTE,
+    #     cbar_kws={'label':'재구매율 (%)'}, linewidths=.3, linecolor='white', ax=ax)
+    # ax.set_xlabel("첫 구매 후 경과 주 수")
+    # ax.set_ylabel("코호트 주 (YYYY-MM Wn (ISO 주) · N)")
+    # ax.set_yticklabels(ax.get_yticklabels(), rotation=0)
+    # apply_common_style(fig, ax, title=f"{selected_month} (W{selected_week if selected_week != 'All' else '전체'}) 주간 코호트 재구매율")
+    # fig.tight_layout()
+
+    # return fig, heat

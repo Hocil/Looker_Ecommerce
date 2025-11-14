@@ -340,7 +340,7 @@ else:
             # 1) 기존 패턴 시각화
             st.pyplot(weekday_fig)
 
-            # 2) ✨ 요일별 재구매자 수 막대 그래프 추가
+            # 2) 요일별 재구매자 수 막대 그래프 추가
             if order_data is not None and not order_data.empty:
                 st.subheader("요일별 재구매자 수")
                 fig_bar, ax_bar = plt.subplots()

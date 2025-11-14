@@ -645,26 +645,42 @@ def create_weekday_weekend_chart(orders_df, start_date, end_date):
     # # y축 범위/눈금 고정: 0.00% ~ 0.08% (0, 0.02, 0.04, 0.06, 0.08)
     # ax.set_ylim(0, 0.0008)
     # ax.set_yticks([0.0, 0.0002, 0.0004, 0.0006, 0.0008])
-
-    # 막대 위 라벨: 소수 셋째 자리까지 0.074% 형태
+    
     for rect, r in zip(bars, g['Rate']):
         ax.annotate(
             f"{r*100:.3f}%",
             xy=(rect.get_x() + rect.get_width()/2, r),
-            xytext=(0, 6),
+            # 🔽 막대 안쪽으로 10pt 내려서 그리기
+            xytext=(0, -10),
             textcoords='offset points',
             ha='center',
-            va='bottom'
+            va='top',      # 기준을 위쪽으로 바꿔서 안쪽에 붙이기
         )
                     
-    # y축 포맷: 0.00%, 0.02% ... 형식
     ax.yaxis.set_major_formatter(PercentFormatter(xmax=1.0, decimals=2))
     ax.set_ylabel("재구매율 (%)")
-    # ✨ 제목도 주문일 기준 문구로 통일
     apply_common_style(fig, ax, title="주문일 기준 주중 vs 주말 재구매율 비교")
     fig.tight_layout()
 
-    return fig, tbl
+    # # 막대 위 라벨: 소수 셋째 자리까지 0.074% 형태
+    # for rect, r in zip(bars, g['Rate']):
+    #     ax.annotate(
+    #         f"{r*100:.3f}%",
+    #         xy=(rect.get_x() + rect.get_width()/2, r),
+    #         xytext=(0, 6),
+    #         textcoords='offset points',
+    #         ha='center',
+    #         va='bottom'
+    #     )
+                    
+    # # y축 포맷: 0.00%, 0.02% ... 형식
+    # ax.yaxis.set_major_formatter(PercentFormatter(xmax=1.0, decimals=2))
+    # ax.set_ylabel("재구매율 (%)")
+    # # ✨ 제목도 주문일 기준 문구로 통일
+    # apply_common_style(fig, ax, title="주문일 기준 주중 vs 주말 재구매율 비교")
+    # fig.tight_layout()
+
+    # return fig, tbl
 
     # g = (df.groupby('is_weekend', as_index=False)
     #        .agg(Repeaters=('active_users','sum'), Exposure=('cohort_size','sum')))

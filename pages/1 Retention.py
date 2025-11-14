@@ -4,13 +4,25 @@ import koreanize_matplotlib
 import matplotlib.pyplot as plt
 from data import load_all_data
 
+# from charts.retention_charts import (
+#     create_purchase_distribution_chart, 
+#      create_advanced_cohort_heatmap,
+#     create_repeat_purchaser_chart, create_weekly_cohort_heatmap,
+#     create_daily_cohort_heatmap, create_weekday_repeat_purchase_charts,
+#     create_weekday_weekend_chart
+# )
+
 from charts.retention_charts import (
     create_purchase_distribution_chart, 
-     create_advanced_cohort_heatmap,
-    create_repeat_purchaser_chart, create_weekly_cohort_heatmap,
-    create_daily_cohort_heatmap, create_weekday_repeat_purchase_charts,
-    create_weekday_weekend_chart
+    create_advanced_cohort_heatmap,
+    create_repeat_purchaser_chart,
+    create_weekly_cohort_heatmap,
+    create_daily_cohort_heatmap,
+    create_weekday_repeat_purchase_charts,
+    create_weekday_weekend_chart,
+    create_hourly_hau_repeat_rate_chart,
 )
+
 
 # 데이터 로드
 all_data = load_all_data()
@@ -306,41 +318,18 @@ else:
             else:
                 # 함수 내부에서 이미 경고 메시지를 표시함
                 pass
-  
 
-    # with tab3:
-    #     st.subheader("요일에 따른 재구매 패턴 심층 분석")
-    #     st.write("사용자의 첫 구매 요일과 실제 재구매가 발생한 요일 간의 관계를 분석합니다. 특정 요일에 첫 구매를 유도하는 것이 재구매율에 영향을 미치는지 파악할 수 있습니다.")
     with tab3:
         st.subheader("요일/시간대별 재구매 패턴 심층 분석")
         st.write("사용자의 첫 구매 요일과 실제 재구매가 발생한 요일에 따른 재구매자 수와 재구매 패턴을 확인합니다.")
 
-        # # 새로 만든 함수 호출
-        # weekday_fig, order_data, cohort_data = create_weekday_repeat_purchase_charts(orders_master, start_date, end_date)
-
-        # if weekday_fig:
-        #     st.pyplot(weekday_fig)
-            
-        #     with st.expander("상세 데이터 보기"):
-        #         col1, col2 = st.columns(2)
-        #         with col1:
-        #             st.write("#### 재구매 발생 요일 기준")
-        #             st.dataframe(order_data[['Weekday', 'Repeat_Orders', 'Exposure', 'Repeat_Rate']].style.format({'Repeat_Rate': '{:.2%}'}))
-        #         with col2:
-        #             st.write("#### 첫 구매 요일 기준")
-        #             st.dataframe(cohort_data[['Weekday', 'Repeat_Orders', 'Exposure', 'Repeat_Rate']].style.format({'Repeat_Rate': '{:.2%}'}))
-        # else:
-        #     # 함수 내부에서 이미 경고 메시지를 표시함
-        #     pass
-
-        # 새로 만든 함수 호출
+        # 1) 요일 패턴 분석
         weekday_fig, order_data, cohort_data = create_weekday_repeat_purchase_charts(orders_master, start_date, end_date)
 
         if weekday_fig:
-            # 1) 기존 패턴 시각화
             st.pyplot(weekday_fig)
 
-            # 2) 요일별 재구매자 수 막대 그래프 추가
+            # 요일별 재구매자 수 막대 그래프
             if order_data is not None and not order_data.empty:
                 st.subheader("요일별 재구매자 수")
                 fig_bar, ax_bar = plt.subplots()
@@ -350,7 +339,7 @@ else:
                 ax_bar.set_title("요일별 재구매자 수")
                 st.pyplot(fig_bar)
 
-            # 3) 상세 데이터 테이블
+            # 상세 데이터 테이블
             with st.expander("상세 데이터 보기"):
                 col1, col2 = st.columns(2)
                 with col1:
@@ -366,11 +355,32 @@ else:
                         .style.format({'Repeat_Rate': '{:.2%}'})
                     )
         else:
-            # 함수 내부에서 이미 경고 메시지를 표시함
             pass
+
+        # 2) 2023년 HAU & 시간대별 재구매율
         st.divider()
-        
-        # --- ✨ [섹션 추가] 주중/주말 재구매율 비교 ---
+        st.subheader("2023년 HAU & 시간대별 재구매율")
+        st.write("2023년 동안 시간대별 활성 사용자 수(HAU)와 재구매율을 함께 비교하여, 어떤 시간대에 재구매가 활발한지 확인합니다.")
+
+        hourly_fig, hourly_df = create_hourly_hau_repeat_rate_chart(orders_master)
+
+        if hourly_fig:
+            st.pyplot(hourly_fig)
+            with st.expander("상세 데이터 보기"):
+                # 재구매율을 % 단위로 보기 좋게 변환
+                df_show = hourly_df.copy()
+                df_show['repeat_rate(%)'] = (df_show['repeat_rate'] * 100).round(2)
+                st.dataframe(
+                    df_show[['hour', 'HAU', 'total_orders', 'repeat_orders', 'repeat_rate(%)']]
+                    .rename(columns={'hour': '시간대(시)'})
+                )
+        else:
+            pass
+
+        st.caption("※ 19–23시에 재구매율 관측 불가")
+
+        # 3) 주중 vs 주말 재구매율 비교
+        st.divider()
         st.subheader("주중 vs 주말 재구매율 비교")
         st.write("전체 재구매 활동이 주중과 주말 중 어느 시기에 더 활발하게 일어나는지 비교 분석합니다.")
         weekday_fig, weekday_tbl = create_weekday_weekend_chart(orders_master, start_date, end_date)
@@ -384,6 +394,63 @@ else:
                 st.pyplot(weekday_fig)
         else:
             st.warning("주중/주말 분석을 위한 데이터가 부족합니다.")
+
+
+    # with tab3:
+    #     st.subheader("요일/시간대별 재구매 패턴 심층 분석")
+    #     st.write("사용자의 첫 구매 요일과 실제 재구매가 발생한 요일에 따른 재구매자 수와 재구매 패턴을 확인합니다.")
+
+    #     # 새로 만든 함수 호출
+    #     weekday_fig, order_data, cohort_data = create_weekday_repeat_purchase_charts(orders_master, start_date, end_date)
+
+    #     if weekday_fig:
+    #         # 1) 기존 패턴 시각화
+    #         st.pyplot(weekday_fig)
+
+    #         # 2) 요일별 재구매자 수 막대 그래프 추가
+    #         if order_data is not None and not order_data.empty:
+    #             st.subheader("요일별 재구매자 수")
+    #             fig_bar, ax_bar = plt.subplots()
+    #             ax_bar.bar(order_data["Weekday"], order_data["Repeat_Orders"])
+    #             ax_bar.set_xlabel("요일")
+    #             ax_bar.set_ylabel("재구매자 수")
+    #             ax_bar.set_title("요일별 재구매자 수")
+    #             st.pyplot(fig_bar)
+
+    #         # 3) 상세 데이터 테이블
+    #         with st.expander("상세 데이터 보기"):
+    #             col1, col2 = st.columns(2)
+    #             with col1:
+    #                 st.write("#### 재구매 발생 요일 기준")
+    #                 st.dataframe(
+    #                     order_data[['Weekday', 'Repeat_Orders', 'Exposure', 'Repeat_Rate']]
+    #                     .style.format({'Repeat_Rate': '{:.2%}'})
+    #                 )
+    #             with col2:
+    #                 st.write("#### 첫 구매 요일 기준")
+    #                 st.dataframe(
+    #                     cohort_data[['Weekday', 'Repeat_Orders', 'Exposure', 'Repeat_Rate']]
+    #                     .style.format({'Repeat_Rate': '{:.2%}'})
+    #                 )
+    #     else:
+    #         # 함수 내부에서 이미 경고 메시지를 표시함
+    #         pass
+    #     st.divider()
+        
+    #     # --- ✨ [섹션 추가] 주중/주말 재구매율 비교 ---
+    #     st.subheader("주중 vs 주말 재구매율 비교")
+    #     st.write("전체 재구매 활동이 주중과 주말 중 어느 시기에 더 활발하게 일어나는지 비교 분석합니다.")
+    #     weekday_fig, weekday_tbl = create_weekday_weekend_chart(orders_master, start_date, end_date)
+        
+    #     if weekday_fig:
+    #         col1, col2 = st.columns([1, 1.5])
+    #         with col1:
+    #             st.write("#### 분석 요약 테이블")
+    #             st.dataframe(weekday_tbl, hide_index=True)
+    #         with col2:
+    #             st.pyplot(weekday_fig)
+    #     else:
+    #         st.warning("주중/주말 분석을 위한 데이터가 부족합니다.")
 
 
     

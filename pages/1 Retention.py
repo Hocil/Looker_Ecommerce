@@ -98,8 +98,8 @@ else:
     st.header("고객 리텐션 분석 (Cohort)")
 
     # --- 사이드바: 컨트롤 패널 ---
-    st.sidebar.header("컨트롤 패널")
-    st.sidebar.subheader("날짜 범위 (고정)")
+    # st.sidebar.header("컨트롤 패널")
+    st.sidebar.subheader("날짜 범위 (2023년 고정)")
     # Retention 분석은 2023년 데이터만 사용하므로 기간을 고정
     start_date = pd.to_datetime("2023-01-01").date()
     end_date = pd.to_datetime("2023-12-31").date()
@@ -205,6 +205,57 @@ else:
         st.write("월별 분석보다 더 세분화하여, 특정 주에 첫 구매를 한 고객 그룹이 매주 얼마나 재방문하여 구매하는지 추적합니다.")
 
 
+        # # --- 필터 위젯 ---
+        # # 데이터에서 선택 가능한 월 목록 동적 생성
+        # temp_df = orders_master.copy()
+
+        # # 1) created_at을 안전하게 datetime으로 변환 (UTC, 실패는 NaT 처리)
+        # temp_df['created_at'] = pd.to_datetime(temp_df['created_at'], errors='coerce', utc=True)
+
+        # # 2) 파싱 실패(NaT) 제거
+        # temp_df = temp_df.dropna(subset=['created_at'])
+
+        # # 3) 2023년만 필터링
+        # temp_df = temp_df[temp_df['created_at'].dt.year == 2023].copy()
+
+        # # 4) 월(코호트) 라벨 생성
+        # temp_df['cohort_month'] = temp_df['created_at'].dt.to_period('M').astype(str)
+
+        # # 5) 선택 옵션
+        # available_months = sorted(temp_df['cohort_month'].unique(), reverse=True)
+
+        # col1, col2, col3 = st.columns([1, 1, 2])
+        # with col1:
+        #     selected_month = st.selectbox("분석할 코호트 월 선택:", available_months)
+        # with col2:
+        #     week_options = ['All'] + list(range(1, 6))
+        #     selected_week = st.selectbox("주차 필터 (Wn):", week_options, help="해당 월의 n번째 주에 시작된 코호트만 필터링합니다.")
+
+        # col_slider, _ = st.columns([2, 1])
+        # with col_slider:
+        #     max_age_option = st.slider("최대 경과 주 수:", 1, 52, 12)
+
+        # show_annotations = st.checkbox("히트맵에 값(%) 표시", value=True)
+        # st.divider()
+
+        # # --- 차트 생성 및 표시 ---
+        # if selected_month:
+        #     weekly_fig, weekly_df = create_weekly_cohort_heatmap(
+        #         orders_master, 
+        #         selected_month,
+        #         selected_week,
+        #         max_age_option, 
+        #         show_annotations
+        #     )
+
+        #     if weekly_fig:
+        #         st.pyplot(weekly_fig)
+        #         with st.expander("상세 데이터 보기"):
+        #             st.dataframe(weekly_df.style.format("{:.2%}"))
+        #     else:
+        #         # 함수 내부에서 이미 경고 메시지를 표시함
+        #         pass
+
         # --- 필터 위젯 ---
         # 데이터에서 선택 가능한 월 목록 동적 생성
         temp_df = orders_master.copy()
@@ -264,25 +315,59 @@ else:
         st.subheader("요일/시간대별 재구매 패턴 심층 분석")
         st.write("사용자의 첫 구매 요일과 실제 재구매가 발생한 요일에 따른 재구매자 수와 재구매 패턴을 확인합니다.")
 
+        # # 새로 만든 함수 호출
+        # weekday_fig, order_data, cohort_data = create_weekday_repeat_purchase_charts(orders_master, start_date, end_date)
+
+        # if weekday_fig:
+        #     st.pyplot(weekday_fig)
+            
+        #     with st.expander("상세 데이터 보기"):
+        #         col1, col2 = st.columns(2)
+        #         with col1:
+        #             st.write("#### 재구매 발생 요일 기준")
+        #             st.dataframe(order_data[['Weekday', 'Repeat_Orders', 'Exposure', 'Repeat_Rate']].style.format({'Repeat_Rate': '{:.2%}'}))
+        #         with col2:
+        #             st.write("#### 첫 구매 요일 기준")
+        #             st.dataframe(cohort_data[['Weekday', 'Repeat_Orders', 'Exposure', 'Repeat_Rate']].style.format({'Repeat_Rate': '{:.2%}'}))
+        # else:
+        #     # 함수 내부에서 이미 경고 메시지를 표시함
+        #     pass
 
         # 새로 만든 함수 호출
         weekday_fig, order_data, cohort_data = create_weekday_repeat_purchase_charts(orders_master, start_date, end_date)
 
         if weekday_fig:
+            # 1) 기존 패턴 시각화
             st.pyplot(weekday_fig)
-            
+
+            # 2) ✨ 요일별 재구매자 수 막대 그래프 추가
+            if order_data is not None and not order_data.empty:
+                st.subheader("요일별 재구매자 수")
+                fig_bar, ax_bar = plt.subplots()
+                ax_bar.bar(order_data["Weekday"], order_data["Repeat_Orders"])
+                ax_bar.set_xlabel("요일")
+                ax_bar.set_ylabel("재구매자 수")
+                ax_bar.set_title("요일별 재구매자 수")
+                st.pyplot(fig_bar)
+
+            # 3) 상세 데이터 테이블
             with st.expander("상세 데이터 보기"):
                 col1, col2 = st.columns(2)
                 with col1:
                     st.write("#### 재구매 발생 요일 기준")
-                    st.dataframe(order_data[['Weekday', 'Repeat_Orders', 'Exposure', 'Repeat_Rate']].style.format({'Repeat_Rate': '{:.2%}'}))
+                    st.dataframe(
+                        order_data[['Weekday', 'Repeat_Orders', 'Exposure', 'Repeat_Rate']]
+                        .style.format({'Repeat_Rate': '{:.2%}'})
+                    )
                 with col2:
                     st.write("#### 첫 구매 요일 기준")
-                    st.dataframe(cohort_data[['Weekday', 'Repeat_Orders', 'Exposure', 'Repeat_Rate']].style.format({'Repeat_Rate': '{:.2%}'}))
+                    st.dataframe(
+                        cohort_data[['Weekday', 'Repeat_Orders', 'Exposure', 'Repeat_Rate']]
+                        .style.format({'Repeat_Rate': '{:.2%}'})
+                    )
         else:
             # 함수 내부에서 이미 경고 메시지를 표시함
             pass
-
         st.divider()
         
         # --- ✨ [섹션 추가] 주중/주말 재구매율 비교 ---

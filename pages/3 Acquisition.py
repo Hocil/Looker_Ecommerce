@@ -79,27 +79,39 @@ else:
 
     # --- 메인 콘텐츠 ---
 
-    # 1. 선택된 '전체 기간'에 대한 KPI 계산
+    # # 1. 선택된 '전체 기간'에 대한 KPI 계산
     
-    # 전체 기간 총 매출 계산
-    valid_status = ['Complete'] # 실제 매출은 'Complete' 상태만 집계
-    total_revenue = order_items['sale_price'][order_items['status'].isin(valid_status)].sum()
+    # # 전체 기간 총 매출 계산
+    # valid_status = ['Complete'] # 실제 매출은 'Complete' 상태만 집계
+    # total_revenue = order_items['sale_price'][order_items['status'].isin(valid_status)].sum()
 
+    # # 전체 기간 총 순 방문자 수(Unique Users) 계산
+    # # MAU의 합계가 아닌, 전체 기간의 고유한 user_id 수를 계산해야 합니다.
+    # total_unique_users = events['user_id'].nunique()
+
+    # # 2. KPI 지표 표시 (수정된 값 사용)
+    # st.header(f"{start_date.strftime('%Y-%m-%d')} ~ {end_date.strftime('%Y-%m-%d')} 핵심 성과 지표")
+    # st.write("선택된 기간 동안의 총 매출과 순 방문자 수를 나타냅니다.")
+    # col1, col2 = st.columns(2)
+    # col1.metric("총 매출 (Total Revenue)", f"${total_revenue:,.2f}")
+    # col2.metric("총 순 방문자 수 (Unique Users)", f"{total_unique_users:,.0f} 명")
+    # ------------------------------------------------------------------------------------------------------------
+    
+    # 1. 선택된 '전체 기간'에 대한 KPI 계산
     # 전체 기간 총 순 방문자 수(Unique Users) 계산
-    # MAU의 합계가 아닌, 전체 기간의 고유한 user_id 수를 계산해야 합니다.
+    # MAU의 합계가 아닌, 전체 기간의 고유한 user_id 수 계산.
     total_unique_users = events['user_id'].nunique()
 
     # 2. KPI 지표 표시 (수정된 값 사용)
     st.header(f"{start_date.strftime('%Y-%m-%d')} ~ {end_date.strftime('%Y-%m-%d')} 핵심 성과 지표")
-    st.write("선택된 기간 동안의 총 매출과 순 방문자 수를 나타냅니다.")
-    col1, col2 = st.columns(2)
-    col1.metric("총 매출 (Total Revenue)", f"${total_revenue:,.2f}")
-    col2.metric("총 순 방문자 수 (Unique Users)", f"{total_unique_users:,.0f} 명")
-    
+    st.write("선택된 기간 동안의 순 방문자 수를 나타냅니다.")
+    st.metric("총 순 방문자 수 (Unique Users)", f"{total_unique_users:,.0f} 명")
+
     st.divider()
 
     # 2. 탭을 사용하여 콘텐츠 분리
-    tab1, tab2, tab3  = st.tabs(["🔍 퍼널 분석 (Funnel)", "🗺️ 유입 경로 분석", "📅 월별/일별 사용자 분석"])
+    tab1, tab2, tab3  = st.tabs(["🔍 퍼널 분석 (Funnel)", "🗺️ 유입 경로 분석", "📅 월/일별 사용자 분석"])
+
 
 
 
@@ -117,7 +129,7 @@ else:
         st.divider()
 
         st.subheader("사용자 행동 흐름 (Sankey)")
-        st.write("사용자들이 웹사이트/앱 내에서 어떤 순서로 페이지를 이동하고 행동하는지 흐름을 시각화하여 보여줍니다. 주요 사용자 경로와 이탈 지점을 파악하는 데 유용합니다.")
+        st.write("사용자들이 웹사이트 내에서 어떤 순서로 페이지를 이동하고 행동하는지 흐름을 시각화하여 보여줍니다. 주요 사용자 경로와 이탈 지점을 파악하는 데 유용합니다.")
         sankey_fig = create_sankey_chart(events, start_date, end_date)
         if sankey_fig:
             st.plotly_chart(sankey_fig, use_container_width=True)
@@ -156,7 +168,7 @@ else:
         st.divider()
 
         st.subheader("유입 경로별 인구통계 상세 분석")
-        st.write("특정 유입 경로를 통해 들어온 사용자들의 국가, 성별, 연령대 등 인구통계학적 특성을 상세히 분석합니다.")
+        st.write("특정 유입 경로를 통해 들어온 사용자들의 국가와 연령대 분포를 분석합니다.")
 
         # 1. 메인 화면에 필터 배치
         filter_col, _ = st.columns([1, 2])

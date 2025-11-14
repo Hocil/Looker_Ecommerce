@@ -58,14 +58,35 @@ def create_mau_revenue_chart(order_items_df, events_df, start_date, end_date):
 
 @st.cache_data
 # ✨ 수정: start_date, end_date를 인자로 추가
+# def create_sankey_chart(events_df,start_date, end_date):
+#     """retentioneering으로 생키 차트를 생성합니다."""
+#     # 수정: 함수 내부에서 날짜 필터링 수행
+#     events_filtered = events_df
+#     event_stream = Eventstream(events_filtered, raw_data_schema=raw_data_schema)
+#     fig = event_stream.step_sankey().plot()
+#     fig.update_traces(textfont=dict(color='black', family='Arial, sans-serif'))
+#     return fig
+
 def create_sankey_chart(events_df,start_date, end_date):
     """retentioneering으로 생키 차트를 생성합니다."""
-    # ✨ 수정: 함수 내부에서 날짜 필터링 수행
     events_filtered = events_df
+
     event_stream = Eventstream(events_filtered, raw_data_schema=raw_data_schema)
     fig = event_stream.step_sankey().plot()
-    fig.update_traces(textfont=dict(color='black', family='Arial, sans-serif'))
+
+    # 노드 진한 파랑, 링크 연한 파랑 계열
+    fig.update_traces(
+        node=dict(
+            color=PRIMARY_COLOR,
+            line=dict(color="white", width=0.5)
+        ),
+        link=dict(
+            color=SECONDARY_COLOR
+        ),
+        textfont=dict(color="black", family="Arial, sans-serif")
+    )
     return fig
+
 
 @st.cache_data
 def create_funnel_chart(events_df, stages,start_date, end_date):
@@ -73,14 +94,24 @@ def create_funnel_chart(events_df, stages,start_date, end_date):
     events_filtered = events_df
     event_stream = Eventstream(events_filtered, raw_data_schema=raw_data_schema)
     
-    # --- ✨ 수정: 퍼널 차트 생성 및 색상 적용 ---
-    fig = event_stream.funnel(stages = stages).plot()
+    # # --- ✨ 수정: 퍼널 차트 생성 및 색상 적용 ---
+    # fig = event_stream.funnel(stages = stages).plot()
     
-    # Plotly Figure의 marker 속성을 업데이트하여 색상 리스트를 직접 지정
-    # style_config에 정의된 색상들을 활용
-    fig.update_traces(marker=dict(color=[PRIMARY_COLOR, ACCENT_COLOR_1, SECONDARY_COLOR]))
-    fig.update_traces(textfont=dict(color='black', family='Arial, sans-serif'))
+    # # Plotly Figure의 marker 속성을 업데이트하여 색상 리스트를 직접 지정
+    # # style_config에 정의된 색상들을 활용
+    # fig.update_traces(marker=dict(color=[PRIMARY_COLOR, ACCENT_COLOR_1, SECONDARY_COLOR]))
+    # fig.update_traces(textfont=dict(color='black', family='Arial, sans-serif'))
+    # return fig
+
+    fig = event_stream.funnel(stages=stages).plot()
+
+    # 전 단계 모두 파랑 계열로 통일
+    fig.update_traces(
+        marker=dict(color=[PRIMARY_COLOR, SECONDARY_COLOR, PRIMARY_COLOR]),
+        textfont=dict(color="black", family="Arial, sans-serif")
+    )
     return fig
+
 
 
 # --- ✨ [함수 추가] 유입 경로 분석 함수들 ---
@@ -180,13 +211,26 @@ def create_age_chart(users_df, start_date, end_date, traffic_source):
     filtered_users['age_group'] = pd.cut(filtered_users['age'], bins=age_bins, labels=age_labels, right=False, include_lowest=True)
     age_counts = filtered_users['age_group'].value_counts().sort_index()
     
+    # fig, ax = plt.subplots(figsize=(5, 3))
+    # sns.barplot(x=age_counts.index, y=age_counts.values, ax=ax, palette=CATEGORICAL_PALETTE)
+    # ax.set_xlabel('연령대', fontsize=12)
+    # ax.set_ylabel('사용자 수')
+    # apply_common_style(fig, ax, title='연령대별 분포')
+    # fig.tight_layout()
+    # return fig, age_counts.reset_index()
     fig, ax = plt.subplots(figsize=(5, 3))
-    sns.barplot(x=age_counts.index, y=age_counts.values, ax=ax, palette=CATEGORICAL_PALETTE)
+    sns.barplot(
+    x=age_counts.index,
+    y=age_counts.values,
+    ax=ax,
+    color=PRIMARY_COLOR   # 단일 파랑 계열로 통일
+    )
     ax.set_xlabel('연령대', fontsize=12)
     ax.set_ylabel('사용자 수')
     apply_common_style(fig, ax, title='연령대별 분포')
     fig.tight_layout()
     return fig, age_counts.reset_index()
+
 
 @st.cache_data
 # ==============================================================================

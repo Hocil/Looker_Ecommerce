@@ -120,7 +120,7 @@ else:
     st.sidebar.divider()
     st.sidebar.subheader("차트 옵션")
     # max_age_option = st.sidebar.slider("최대 경과 개월 수:", 1, 24, 12, help="히트맵에 표시할 최대 재구매 경과 개월 수를 선택합니다.")
-    # show_annotations = st.sidebar.checkbox("히트맵에 리텐션 값(%) 표시", value=True)
+    show_annotations = st.sidebar.checkbox("히트맵에 리텐션 값(%) 표시", value=True)
 
 
     # tab1, tab2, tab3  = st.tabs(["구매 횟수 및 리텐션", "월/주/일별 코호트 분석", "요일별 재구매 패턴"])

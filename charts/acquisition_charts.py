@@ -107,8 +107,10 @@ def create_funnel_chart(events_df, stages,start_date, end_date):
 
     # 전 단계 모두 파랑 계열로 통일
     fig.update_traces(
-        marker=dict(color=[PRIMARY_COLOR, SECONDARY_COLOR, PRIMARY_COLOR]),
-        textfont=dict(color="black", family="Arial, sans-serif")
+        marker=dict(
+            color=[PRIMARY_COLOR, SECONDARY_COLOR, PRIMARY_COLOR] 
+        ),
+        textfont=dict(color='black', family='Arial, sans-serif')
     )
     return fig
 

@@ -530,16 +530,119 @@ def create_weekday_repeat_purchase_charts(orders_df, start_date, end_date):
     return fig, order_grp, cohort_grp
 
 # HAU & 시간대별 재구매율 함수 추가
+# @st.cache_data
+# def create_hourly_hau_repeat_rate_chart(orders_df):
+#     """
+#     2023년 기준 시간대별 HAU(유니크 구매자 수)와 재구매율을 함께 보여주는 라인 차트 생성.
+#     """
+#     use_cols = [c for c in ['user_id', 'created_at', 'status'] if c in orders_df.columns]
+#     src = orders_df.loc[:, use_cols].copy()
+#     src = src[src['user_id'].notna()]
+
+#     # 상태 필터
+#     if 'status' in src.columns:
+#         src['status'] = src['status'].astype(str).str.strip().str.lower()
+#         src = src[src['status'] == 'complete'].drop(columns=['status'])
+
+#     if src.empty:
+#         st.warning("상태가 'Complete'인 주문이 없습니다.")
+#         return None, None
+
+#     # 시간 파싱
+#     src['created_at'] = pd.to_datetime(src['created_at'], utc=True, errors='coerce')
+#     src = src.dropna(subset=['created_at'])
+#     if src.empty:
+#         st.warning("유효한 주문 시간이 없습니다.")
+#         return None, None
+
+#     # 2023년만 사용
+#     src_2023 = src[src['created_at'].dt.year == 2023].copy()
+#     if src_2023.empty:
+#         st.warning("2023년 주문 데이터가 없습니다.")
+#         return None, None
+
+#     # 사용자별 첫 구매 시각
+#     first = (
+#         src_2023.groupby('user_id', as_index=False)['created_at']
+#         .min()
+#         .rename(columns={'created_at': 'first_time'})
+#     )
+
+#     lab = src_2023.merge(first, on='user_id', how='inner')
+#     lab['is_repeat'] = lab['created_at'] > lab['first_time']
+#     lab['hour'] = lab['created_at'].dt.hour  # 0~23시
+
+#     # 0~23시 모두 포함되도록 보정
+#     hours_idx = pd.Index(range(24), name='hour')
+#     agg = (
+#         lab.groupby('hour')
+#            .agg(
+#                HAU=('user_id', 'nunique'),
+#                total_orders=('user_id', 'count'),
+#                repeat_orders=('is_repeat', 'sum')
+#            )
+#            .reindex(hours_idx, fill_value=0)
+#            .reset_index()
+#     )
+
+#     agg['repeat_rate'] = np.where(
+#         agg['total_orders'] > 0,
+#         agg['repeat_orders'] / agg['total_orders'],
+#         np.nan
+#     )
+
+#     # 19–23시는 재구매율 관측 불가로 처리 (라인이 끊기도록 NaN)
+#     agg.loc[agg['hour'].between(19, 23), 'repeat_rate'] = np.nan
+
+#     # --- 시각화 ---
+#     fig, ax1 = plt.subplots(figsize=(12, 5))
+
+#     x = agg['hour']
+#     # 왼쪽 축: HAU
+#     line1 = ax1.plot(
+#         x,
+#         agg['HAU'],
+#         marker='o',
+#         linewidth=2,
+#         color=HIGHLIGHT_COLOR,
+#         label='HAU (유니크 구매자 수)'
+#     )
+#     ax1.set_xlabel("시간대 (시)")
+#     ax1.set_ylabel("HAU (유니크 구매자 수)")
+
+#     # 오른쪽 축: 재구매율
+#     ax2 = ax1.twinx()
+#     line2 = ax2.plot(
+#         x,
+#         agg['repeat_rate'],
+#         marker='s',
+#         linewidth=2,
+#         color=PRIMARY_COLOR,
+#         label='재구매율'
+#     )
+#     ax2.set_ylabel("재구매율 (%)")
+#     ax2.yaxis.set_major_formatter(PercentFormatter(xmax=1.0, decimals=1))
+
+#     # 범례 합치기
+#     lines = line1 + line2
+#     labels = [l.get_label() for l in lines]
+#     ax1.legend(lines, labels, loc='upper right')
+
+#     apply_common_style(fig, ax1, title="2023년 HAU & 시간대별 재구매율")
+#     fig.tight_layout()
+
+#     return fig, agg
 @st.cache_data
 def create_hourly_hau_repeat_rate_chart(orders_df):
     """
     2023년 기준 시간대별 HAU(유니크 구매자 수)와 재구매율을 함께 보여주는 라인 차트 생성.
     """
+    # 필요한 컬럼만 사용
     use_cols = [c for c in ['user_id', 'created_at', 'status'] if c in orders_df.columns]
     src = orders_df.loc[:, use_cols].copy()
     src = src[src['user_id'].notna()]
 
-    # 상태 필터
+    # 주문 상태 필터
     if 'status' in src.columns:
         src['status'] = src['status'].astype(str).str.strip().str.lower()
         src = src[src['status'] == 'complete'].drop(columns=['status'])
@@ -555,7 +658,7 @@ def create_hourly_hau_repeat_rate_chart(orders_df):
         st.warning("유효한 주문 시간이 없습니다.")
         return None, None
 
-    # 2023년만 사용
+    # 2023년 데이터만 사용
     src_2023 = src[src['created_at'].dt.year == 2023].copy()
     if src_2023.empty:
         st.warning("2023년 주문 데이터가 없습니다.")
@@ -572,7 +675,7 @@ def create_hourly_hau_repeat_rate_chart(orders_df):
     lab['is_repeat'] = lab['created_at'] > lab['first_time']
     lab['hour'] = lab['created_at'].dt.hour  # 0~23시
 
-    # 0~23시 모두 포함되도록 보정
+    # 0~23시 전체를 인덱스로 맞추기
     hours_idx = pd.Index(range(24), name='hour')
     agg = (
         lab.groupby('hour')
@@ -585,19 +688,21 @@ def create_hourly_hau_repeat_rate_chart(orders_df):
            .reset_index()
     )
 
+    # 재구매율 계산
     agg['repeat_rate'] = np.where(
         agg['total_orders'] > 0,
         agg['repeat_orders'] / agg['total_orders'],
         np.nan
     )
 
-    # 19–23시는 재구매율 관측 불가로 처리 (라인이 끊기도록 NaN)
+    # 19–23시는 재구매율 관측 불가로 처리 (라인 끊기게 NaN)
     agg.loc[agg['hour'].between(19, 23), 'repeat_rate'] = np.nan
 
-    # --- 시각화 ---
+    # ---------------- 시각화 ----------------
     fig, ax1 = plt.subplots(figsize=(12, 5))
 
     x = agg['hour']
+
     # 왼쪽 축: HAU
     line1 = ax1.plot(
         x,
@@ -632,6 +737,7 @@ def create_hourly_hau_repeat_rate_chart(orders_df):
     fig.tight_layout()
 
     return fig, agg
+
 
 
 # Helper 함수들

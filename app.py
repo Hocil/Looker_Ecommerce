@@ -30,7 +30,7 @@ st.markdown("### 📂 분석 데이터 개요")
 
 st.markdown("#### **데이터셋 이름:** Looker Ecommerce BigQuery Dataset")
 st.markdown("#### [Kaggle Dataset 링크](https://www.kaggle.com/datasets/mustafakeser4/looker-ecommerce-bigquery-dataset)")
-st.markdown("##### **데이터셋 목표:** 리텐션율을 높여 매출액 올리기")
+st.markdown("##### **데이터셋 목표:** 2024년 연말(11-12월) 재구매율 향상")
 
 # ---------------- 데이터 개요 ----------------
 st.markdown("### 1. 데이터 개요")

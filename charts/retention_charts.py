@@ -622,15 +622,31 @@ def create_weekday_weekend_chart(orders_df, start_date, end_date):
     bars = ax.bar(
         g['Group'],
         g['Rate'],
-        color=[PRIMARY_COLOR, HIGHLIGHT_COLOR],  # SECONDARY_COLOR 대신 HIGHLIGHT_COLOR 사용
+        color=[PRIMARY_COLOR, HIGHLIGHT_COLOR],
         edgecolor='none'
     )
     
-    # ✨ y축 범위/눈금 고정: 0.00% ~ 0.08% (0, 0.02, 0.04, 0.06, 0.08)
-    ax.set_ylim(0, 0.0008)
+    # y축 범위: 최소 0.08%는 보장하되, 실제 최대값보다 조금 여유 있게
+    max_rate = float(np.nanmax(g['Rate'])) if len(g) else 0.0
+    ymax = max(0.0008, max_rate * 1.1)  # 실제 값보다 10% 정도 여유
+    ax.set_ylim(0, ymax)
+
+    # 눈금은 그대로 0.00%, 0.02%, 0.04%, 0.06%, 0.08% 유지
     ax.set_yticks([0.0, 0.0002, 0.0004, 0.0006, 0.0008])
 
-    # ✨ 막대 위 라벨: 소수 셋째 자리까지 0.074% 형태
+    # fig, ax = plt.subplots(figsize=(7, 5))
+    # bars = ax.bar(
+    #     g['Group'],
+    #     g['Rate'],
+    #     color=[PRIMARY_COLOR, HIGHLIGHT_COLOR],  # SECONDARY_COLOR 대신 HIGHLIGHT_COLOR 사용
+    #     edgecolor='none'
+    # )
+    
+    # # y축 범위/눈금 고정: 0.00% ~ 0.08% (0, 0.02, 0.04, 0.06, 0.08)
+    # ax.set_ylim(0, 0.0008)
+    # ax.set_yticks([0.0, 0.0002, 0.0004, 0.0006, 0.0008])
+
+    # 막대 위 라벨: 소수 셋째 자리까지 0.074% 형태
     for rect, r in zip(bars, g['Rate']):
         ax.annotate(
             f"{r*100:.3f}%",
@@ -641,7 +657,7 @@ def create_weekday_weekend_chart(orders_df, start_date, end_date):
             va='bottom'
         )
                     
-    # ✨ y축 포맷: 0.00%, 0.02% ... 형식
+    # y축 포맷: 0.00%, 0.02% ... 형식
     ax.yaxis.set_major_formatter(PercentFormatter(xmax=1.0, decimals=2))
     ax.set_ylabel("재구매율 (%)")
     # ✨ 제목도 주문일 기준 문구로 통일

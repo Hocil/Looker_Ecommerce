@@ -167,8 +167,8 @@ else:
 
         st.divider()
 
-        st.subheader("유입 경로별 인구통계 상세 분석")
-        st.write("특정 유입 경로를 통해 들어온 사용자들의 국가와 연령대 분포를 분석합니다.")
+        st.subheader("유입 경로별 인구통계 분석 (국가 / 연령대)")
+        st.write("선택한 유입 경로를 통해 들어온 사용자들의 국가 분포와 연령대 분포를 분석합니다.")
 
         # 1. 메인 화면에 필터 배치
         filter_col, _ = st.columns([1, 2])
@@ -195,22 +195,6 @@ else:
                 
                 # --- 수정: 차트와 데이터 테이블을 함께 표시 ---
                 
-                
-            # if country_fig:
-            #             st.plotly_chart(country_fig, use_container_width=True)
-            #             with st.expander("상세 데이터 보기"):
-            #                 st.dataframe(country_data.style.apply(highlight_top_rows, axis=1))
-
-                
-            # if age_fig:
-            #             st.pyplot(age_fig)
-            #             with st.expander("상세 데이터 보기"):
-            #                 # age_data는 인덱스가 'age_group'으로 되어 있으므로 reset_index() 필요
-            #                 st.dataframe(age_data.reset_index(drop=True).style.apply(highlight_top_rows, axis=1))
-
-            # else:
-            #     st.warning(f"선택된 기간에 '{selected_source}'를 통해 유입된 사용자가 없습니다.")
-
             if country_fig or age_fig:
                 # 두 개를 가로로 나란히 배치 (왼쪽이 조금 더 넓게)
                 col_country, col_age = st.columns([1.4, 1])

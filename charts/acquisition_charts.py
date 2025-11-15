@@ -16,10 +16,10 @@ raw_data_schema={
 # --- 🎨 차트 생성 함수들 (기능별로 분리 및 캐싱) ---
 
 @st.cache_data
-# ✨ 수정: start_date, end_date를 인자로 추가
+# 수정: start_date, end_date를 인자로 추가
 def create_mau_revenue_chart(order_items_df, events_df, start_date, end_date):
     """월별 매출 및 MAU 이중 축 그래프를 생성합니다."""
-    # ✨ 수정: 함수 내부에서 날짜 필터링 수행
+    # 수정: 함수 내부에서 날짜 필터링 수행
     order_items_filtered = order_items_df
     events_filtered = events_df
 
@@ -57,7 +57,7 @@ def create_mau_revenue_chart(order_items_df, events_df, start_date, end_date):
     return fig, combined_df
 
 @st.cache_data
-# ✨ 수정: start_date, end_date를 인자로 추가
+# 수정: start_date, end_date를 인자로 추가
 # def create_sankey_chart(events_df,start_date, end_date):
 #     """retentioneering으로 생키 차트를 생성합니다."""
 #     # 수정: 함수 내부에서 날짜 필터링 수행
@@ -118,7 +118,7 @@ def create_traffic_distribution_chart(users_df, start_date, end_date):
     
     fig, ax = plt.subplots(figsize=(10, 6))
 
-    # --- ✨ 수정: 상위 3개와 나머지를 구분하는 색상 팔레트 생성 ---
+    # --- 수정: 상위 3개와 나머지를 구분하는 색상 팔레트 생성 ---
     palette = [PRIMARY_COLOR if i < 1 else SECONDARY_COLOR for i in range(len(traffic_counts))]
     sns.barplot(x=traffic_counts.index, y=traffic_counts.values, palette=palette, ax=ax)
 
@@ -179,7 +179,7 @@ def create_country_chart(users_df, start_date, end_date, traffic_source):
 def create_gender_chart(users_df, start_date, end_date, traffic_source):
     """성별 분포 파이 차트 생성"""
 
-    # ✨ 수정: 날짜와 traffic_source로 필터링하는 코드 추가
+    # 수정: 날짜와 traffic_source로 필터링하는 코드 추가
     filtered_users = users_df[(users_df['traffic_source'] == traffic_source)]
 
     if filtered_users.empty: return None
@@ -194,7 +194,7 @@ def create_gender_chart(users_df, start_date, end_date, traffic_source):
 def create_age_chart(users_df, start_date, end_date, traffic_source):
     """연령대별 분포 막대그래프 생성"""
 
-    # ✨ 수정: 날짜와 traffic_source로 필터링하는 코드 추가
+    # 수정: 날짜와 traffic_source로 필터링하는 코드 추가
     filtered_users = users_df[users_df['traffic_source'] == traffic_source]
 
     if filtered_users.empty: return None
@@ -203,15 +203,7 @@ def create_age_chart(users_df, start_date, end_date, traffic_source):
     age_labels = ['10-19', '20-29', '30-39', '40-49', '50-59', '60-69']
     filtered_users['age_group'] = pd.cut(filtered_users['age'], bins=age_bins, labels=age_labels, right=False, include_lowest=True)
     age_counts = filtered_users['age_group'].value_counts().sort_index()
-    
-    # fig, ax = plt.subplots(figsize=(5, 3))
-    # sns.barplot(x=age_counts.index, y=age_counts.values, ax=ax, palette=CATEGORICAL_PALETTE)
-    # ax.set_xlabel('연령대', fontsize=12)
-    # ax.set_ylabel('사용자 수')
-    # apply_common_style(fig, ax, title='연령대별 분포')
-    # fig.tight_layout()
-    # return fig, age_counts.reset_index()
-    
+
     fig, ax = plt.subplots(figsize=(4, 2.8))
     sns.barplot(
     x=age_counts.index,
@@ -227,9 +219,7 @@ def create_age_chart(users_df, start_date, end_date, traffic_source):
 
 
 @st.cache_data
-# ==============================================================================
 # 분석 함수 1: 유입 경로별 구매 전환율 분석
-# ==============================================================================
 def analyze_conversion_rate_by_source_2023(users_df, orders_df):
     """유입 경로별 구매 전환율을 분석하고, 결과 데이터프레임과 차트 Figure를 반환합니다."""
     try:
@@ -253,7 +243,7 @@ def analyze_conversion_rate_by_source_2023(users_df, orders_df):
         conversion_df['conversion_rate (%)'] = (conversion_df['purchasing_users'] / conversion_df['total_users']) * 100
         conversion_df = conversion_df.sort_values(by='conversion_rate (%)', ascending=False).reset_index(drop=True)
 
-        # --- ✨ 수정: 상위 3개와 나머지를 구분하는 색상 팔레트 생성 ---
+        # --- 수정: 상위 3개와 나머지를 구분하는 색상 팔레트 생성 ---
         # 상위 3개는 PRIMARY_COLOR, 나머지는 SECONDARY_COLOR로 설정
         palette = [PRIMARY_COLOR if i < 1 else SECONDARY_COLOR for i in range(len(conversion_df))]
 
@@ -274,14 +264,14 @@ def analyze_conversion_rate_by_source_2023(users_df, orders_df):
         return None, None
     
 @st.cache_data
-# ✨ 수정: start_date, end_date 대신 selected_month를 인자로 받도록 변경
+# 수정: start_date, end_date 대신 selected_month를 인자로 받도록 변경
 def calculate_dau_by_month(events_df, selected_month):
     """선택된 월의 DAU 데이터를 계산하여 반환합니다."""
     
     if selected_month == '전체 기간':
         filtered_events = events_df
     else:
-        # ✨ 수정: 선택된 'YYYY-MM' 문자열과 일치하는 데이터만 필터링
+        # 수정: 선택된 'YYYY-MM' 문자열과 일치하는 데이터만 필터링
         filtered_events = events_df[
             events_df['created_at'].dt.to_period('M').astype(str) == selected_month
         ]

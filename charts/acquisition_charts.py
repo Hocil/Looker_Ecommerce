@@ -93,19 +93,10 @@ def create_funnel_chart(events_df, stages,start_date, end_date):
     """retentioneering으로 퍼널 차트를 생성합니다."""
     events_filtered = events_df
     event_stream = Eventstream(events_filtered, raw_data_schema=raw_data_schema)
-    
-    # # --- ✨ 수정: 퍼널 차트 생성 및 색상 적용 ---
-    # fig = event_stream.funnel(stages = stages).plot()
-    
-    # # Plotly Figure의 marker 속성을 업데이트하여 색상 리스트를 직접 지정
-    # # style_config에 정의된 색상들을 활용
-    # fig.update_traces(marker=dict(color=[PRIMARY_COLOR, ACCENT_COLOR_1, SECONDARY_COLOR]))
-    # fig.update_traces(textfont=dict(color='black', family='Arial, sans-serif'))
-    # return fig
 
     fig = event_stream.funnel(stages=stages).plot()
 
-    # 전 단계 모두 파랑 계열로 통일
+    # 파랑 계열 통일
     fig.update_traces(
         marker=dict(
             color=[PRIMARY_COLOR, SECONDARY_COLOR, PRIMARY_COLOR] 
@@ -116,7 +107,7 @@ def create_funnel_chart(events_df, stages,start_date, end_date):
 
 
 
-# --- ✨ [함수 추가] 유입 경로 분석 함수들 ---
+# --- [함수 추가] 유입 경로 분석 함수들 ---
 @st.cache_data
 def create_traffic_distribution_chart(users_df, start_date, end_date):
     """선택된 기간의 전체 유입 경로 분포 막대그래프를 생성합니다."""
@@ -220,7 +211,8 @@ def create_age_chart(users_df, start_date, end_date, traffic_source):
     # apply_common_style(fig, ax, title='연령대별 분포')
     # fig.tight_layout()
     # return fig, age_counts.reset_index()
-    fig, ax = plt.subplots(figsize=(5, 3))
+    
+    fig, ax = plt.subplots(figsize=(4, 2.8))
     sns.barplot(
     x=age_counts.index,
     y=age_counts.values,

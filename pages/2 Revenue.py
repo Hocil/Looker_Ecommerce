@@ -25,7 +25,7 @@ st.title("💰 매출 분석")
 st.markdown("### Revenue(매출) 현황")
 
 # ---------------- 사이드바 ----------------
-st.sidebar.header("Filters")
+st.sidebar.header("컨트롤 패널")
 
 ## 1. 기간 필터 (연도 제거 → 월만)
 months = list(range(1, 13))

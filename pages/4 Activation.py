@@ -240,45 +240,13 @@ with tab1:
             activated_users=("first_order_month", lambda x: x.notna().sum())))
     monthly_df["activation_rate"] = monthly_df["activated_users"] / monthly_df["total_users"] * 100
 
-    # # ----------------------------- 월별 Total vs Activated Users -----------------------------
-    # st.subheader("월별 유입 vs 활성 유저 추이")
-    # st.info("Total Users와 Activated Users의 월별 추이 비교")
 
-    # # st.pyplot(fig)
-    # fig, ax1 = plt.subplots(figsize=(10,5))
-    # ax2 = ax1.twinx()
-
-    # # 전체 유저 수
-    # l1 = ax1.plot(monthly_df.index.astype(str), monthly_df["total_users"], 
-    #             color="lightgray", marker="o", markersize=6, linewidth=2, label="전체 유저")
-
-    # # 활성 유저 수
-    # l2 = ax2.plot(monthly_df.index.astype(str), monthly_df["activated_users"], 
-    #             color="royalblue", marker="o", markersize=6, linewidth=2, label="활성 유저")
-
-    # # 축 및 제목
-    # ax1.set_xlabel("월")
-    # ax1.set_ylabel("전체 유저 수", color="gray")
-    # ax2.set_ylabel("활성 유저 수", color="royalblue")
-    # ax1.set_title("월별 전체 유저 vs 활성 유저 추이", fontsize=13)
-    # ax1.tick_params(axis='x', rotation=45)
-    # ax1.grid(axis="y", linestyle="--", alpha=0.6)
-    # ax1.yaxis.set_major_locator(plt.MaxNLocator(6))
-
-
-    # # Legend 통합
-    # lines = l1 + l2
-    # labels = [line.get_label() for line in lines]
-    # ax1.legend(lines, labels, loc="upper right", frameon=True)
-
-    # st.pyplot(fig)
-
-        # ----------------------------- 월별 Total vs Activated Users -----------------------------
+    # ----------------------------- 월별 Total vs Activated Users -----------------------------
     st.subheader("월별 전체 유저 vs 활성 유저 추이")
     st.info("가입 후 첫 구매를 완료한 활성 유저와 전체 유저의 월별 추이 비교")
 
     # Figure 생성
-    fig, ax1 = plt.subplots(figsize=(8,4.5), dpi=100)
+    fig, ax1 = plt.subplots(figsize=(8, 4.5), dpi=100)
     ax2 = ax1.twinx()
 
     # ---------- 데이터 시각화 ----------
@@ -317,31 +285,12 @@ with tab1:
     ax1.grid(axis="y", linestyle="--", alpha=0.4)
     ax1.yaxis.set_major_locator(plt.MaxNLocator(6))
 
-    # ---------- 값 라벨 표시 (활성 유저 수: 파랑 / 전체 유저 수: 회색) ----------
-
-    # 활성 유저 수 라벨 (오른쪽 Y축)
-    for i, v in enumerate(monthly_df["activated_users"]):
-        ax2.text(
-            i, v + (v * 0.004),
-            f"{v:,}",
-            ha="center", va="bottom",
-            fontsize=8, color="royalblue", fontweight="bold"
-        )
-
-    # 전체 유저 수 라벨 (왼쪽 Y축)
-    for i, v in enumerate(monthly_df["total_users"]):
-        ax1.text(
-            i, v - (v * 0.004),  # 살짝 아래로
-            f"{v:,}",
-            ha="center", va="top",
-            fontsize=8, color="gray", fontweight="bold"
-        )
-
+    # 여기에 있던 값 라벨(text) 루프는 통째로 제거 
 
     # ---------- 범례 (통합) ----------
     lines = l1 + l2
     labels = [line.get_label() for line in lines]
-    ax1.legend(lines, labels, loc="lower right", frameon=True, fontsize=9)
+    ax1.legend(lines, labels, loc="upper right", frameon=True, fontsize=9)  # 오른쪽 위로 이동
 
     # ---------- 미세 조정 ----------
     for spine in ["top", "right"]:
@@ -350,6 +299,84 @@ with tab1:
 
     plt.tight_layout()
     st.pyplot(fig)
+
+
+    # st.subheader("월별 전체 유저 vs 활성 유저 추이")
+    # st.info("가입 후 첫 구매를 완료한 활성 유저와 전체 유저의 월별 추이 비교")
+
+    # # Figure 생성
+    # fig, ax1 = plt.subplots(figsize=(8,4.5), dpi=100)
+    # ax2 = ax1.twinx()
+
+    # # ---------- 데이터 시각화 ----------
+    # # 전체 유저 수 (회색)
+    # l1 = ax1.plot(
+    #     monthly_df.index.astype(str),
+    #     monthly_df["total_users"],
+    #     color="#B0B0B0",
+    #     marker="o",
+    #     markersize=5,
+    #     linewidth=2.2,
+    #     label="전체 유저 수"
+    # )
+
+    # # 활성 유저 수 (파랑)
+    # l2 = ax2.plot(
+    #     monthly_df.index.astype(str),
+    #     monthly_df["activated_users"],
+    #     color="royalblue",
+    #     marker="o",
+    #     markersize=6,
+    #     linewidth=2.2,
+    #     label="활성 유저 수"
+    # )
+
+    # # ---------- 축, 제목, 격자 ----------
+    # ax1.set_title("월별 전체 유저 vs 활성 유저 추이", fontsize=13, fontweight="bold", pad=10)
+    # ax1.set_xlabel("월", fontsize=10)
+    # ax1.set_ylabel("전체 유저 수", color="#6C6C6C", fontsize=10)
+    # ax2.set_ylabel("활성 유저 수", color="royalblue", fontsize=10)
+
+    # # 눈금 및 격자 스타일
+    # ax1.tick_params(axis="x", rotation=45)
+    # ax1.tick_params(axis="y", colors="#6C6C6C")
+    # ax2.tick_params(axis="y", colors="royalblue")
+    # ax1.grid(axis="y", linestyle="--", alpha=0.4)
+    # ax1.yaxis.set_major_locator(plt.MaxNLocator(6))
+
+    # # ---------- 값 라벨 표시 (활성 유저 수: 파랑 / 전체 유저 수: 회색) ----------
+
+    # # 활성 유저 수 라벨 (오른쪽 Y축)
+    # for i, v in enumerate(monthly_df["activated_users"]):
+    #     ax2.text(
+    #         i, v + (v * 0.004),
+    #         f"{v:,}",
+    #         ha="center", va="bottom",
+    #         fontsize=8, color="royalblue", fontweight="bold"
+    #     )
+
+    # # 전체 유저 수 라벨 (왼쪽 Y축)
+    # for i, v in enumerate(monthly_df["total_users"]):
+    #     ax1.text(
+    #         i, v - (v * 0.004),  # 살짝 아래로
+    #         f"{v:,}",
+    #         ha="center", va="top",
+    #         fontsize=8, color="gray", fontweight="bold"
+    #     )
+
+
+    # # ---------- 범례 (통합) ----------
+    # lines = l1 + l2
+    # labels = [line.get_label() for line in lines]
+    # ax1.legend(lines, labels, loc="lower right", frameon=True, fontsize=9)
+
+    # # ---------- 미세 조정 ----------
+    # for spine in ["top", "right"]:
+    #     ax1.spines[spine].set_visible(False)
+    # ax2.spines["top"].set_visible(False)
+
+    # plt.tight_layout()
+    # st.pyplot(fig)
 
 
 # 2️⃣ Demographic 탭
@@ -434,23 +461,42 @@ with tab2:
 
     # 1) 연령대별 월별 Activation Rate (Multi-line)
 # -------------------- (1) 연령대별 월별 활성화 추이 --------------------
+    # 1) 연령대별 월별 Activation Rate (Multi-line)
+    # -------------------- (1) 연령대별 월별 활성화 추이 --------------------
     with col1:
         st.subheader("연령대별 월별 활성화 추이")
 
-        fig, ax = plt.subplots(figsize=(6,4))
-        plt.subplots_adjust(left=0.12, right=0.98, top=0.90, bottom=0.18)
+        # 🔹 강조할 연령대 선택 필터 추가
+        age_label_list = ["<20", "20s", "30s", "40s", "50s", "60+"]
+        highlight_age = st.selectbox(
+            "강조할 연령대를 선택하세요",
+            options=["All"] + age_label_list,
+            index=0
+        )
 
         # 1. 나이 구간 설정
         bins = [0, 20, 30, 40, 50, 60, 100]
-        labels = ["<20", "20s", "30s", "40s", "50s", "60+"]
-        users_filtered["age_group"] = pd.cut(users_filtered["age"], bins=bins, labels=labels, right=False)
+        labels = age_label_list
+        users_filtered["age_group"] = pd.cut(
+            users_filtered["age"],
+            bins=bins,
+            labels=labels,
+            right=False
+        )
 
         # 2. 연령대 + 가입월 기준 집계
         age_month_df = (
-            merged.merge(users_filtered[["id", "age_group"]], left_on="id", right_on="id", how="left")
+            merged.merge(
+                users_filtered[["id", "age_group"]],
+                left_on="id",
+                right_on="id",
+                how="left"
+            )
             .groupby(["signup_month", "age_group"])
-            .agg(total_users=("id","nunique"),
-                activated_users=("first_order_month", lambda x: x.notna().sum()))
+            .agg(
+                total_users=("id", "nunique"),
+                activated_users=("first_order_month", lambda x: x.notna().sum())
+            )
             .reset_index()
         )
 
@@ -460,33 +506,46 @@ with tab2:
         )
 
         # 4. 피벗 테이블 생성 (행:월, 열:연령대)
-        pivot_df = age_month_df.pivot(index="signup_month", columns="age_group", values="activation_rate")
+        pivot_df = age_month_df.pivot(
+            index="signup_month",
+            columns="age_group",
+            values="activation_rate"
+        )
         pivot_df.index = pivot_df.index.to_timestamp()
+
         # 5. 라인 그래프 생성
-        fig, ax = plt.subplots(figsize=(6,4), dpi=100)
+        fig, ax = plt.subplots(figsize=(6, 4), dpi=100)
 
         for col in pivot_df.columns:
+            # 선택된 연령대는 파랑, 나머지는 회색
+            if highlight_age == "All" or str(col) == highlight_age:
+                color = "royalblue"
+                lw = 2.5
+                alpha = 1.0
+            else:
+                color = "lightgray"
+                lw = 1.5
+                alpha = 0.7
+
             ax.plot(
                 pivot_df.index,
                 pivot_df[col],
                 marker="o",
-                linewidth=2,
+                linewidth=lw,
                 markersize=6,
+                color=color,
+                alpha=alpha,
                 label=col
             )
 
         # 스타일 및 제목
-        # ax.set_title("연령대별 월별 활성화 추이", fontsize=12, fontweight="bold", pad=10)
-        ax.set_xlabel("가입 월", fontsize=10)
+        ax.set_xlabel("구매 월", fontsize=10)  # ✅ 가입 월 → 구매 월 (라벨 텍스트 변경)
         ax.set_ylabel("활성화율 (%)", fontsize=10)
         ax.tick_params(axis='x', rotation=45)
         ax.grid(axis="y", linestyle="--", alpha=0.4)
-        ax.legend(title="연령대", bbox_to_anchor=(1.05, 1), loc="upper left", frameon=False)
 
-        # # 각 포인트 수치 표시
-        # for i, col in enumerate(pivot_df.columns):
-        #     for x, y in zip(pivot_df.index, pivot_df[col]):
-        #         ax.text(x, y + 0.5, f"{y:.1f}%", ha="center", va="bottom", fontsize=8)
+        # 범례: 선택 연령대 강조를 유지하기 위해 그대로 표시
+        ax.legend(title="연령대", bbox_to_anchor=(1.05, 1), loc="upper left", frameon=False)
 
         # 테두리 정리
         for spine in ["top", "right"]:
@@ -494,6 +553,68 @@ with tab2:
 
         plt.tight_layout()
         st.pyplot(fig)
+
+
+    # with col1:
+    #     st.subheader("연령대별 월별 활성화 추이")
+
+    #     fig, ax = plt.subplots(figsize=(6,4))
+    #     plt.subplots_adjust(left=0.12, right=0.98, top=0.90, bottom=0.18)
+
+    #     # 1. 나이 구간 설정
+    #     bins = [0, 20, 30, 40, 50, 60, 100]
+    #     labels = ["<20", "20s", "30s", "40s", "50s", "60+"]
+    #     users_filtered["age_group"] = pd.cut(users_filtered["age"], bins=bins, labels=labels, right=False)
+
+    #     # 2. 연령대 + 가입월 기준 집계
+    #     age_month_df = (
+    #         merged.merge(users_filtered[["id", "age_group"]], left_on="id", right_on="id", how="left")
+    #         .groupby(["signup_month", "age_group"])
+    #         .agg(total_users=("id","nunique"),
+    #             activated_users=("first_order_month", lambda x: x.notna().sum()))
+    #         .reset_index()
+    #     )
+
+    #     # 3. 활성화율 계산
+    #     age_month_df["activation_rate"] = (
+    #         age_month_df["activated_users"] / age_month_df["total_users"] * 100
+    #     )
+
+    #     # 4. 피벗 테이블 생성 (행:월, 열:연령대)
+    #     pivot_df = age_month_df.pivot(index="signup_month", columns="age_group", values="activation_rate")
+    #     pivot_df.index = pivot_df.index.to_timestamp()
+    #     # 5. 라인 그래프 생성
+    #     fig, ax = plt.subplots(figsize=(6,4), dpi=100)
+
+    #     for col in pivot_df.columns:
+    #         ax.plot(
+    #             pivot_df.index,
+    #             pivot_df[col],
+    #             marker="o",
+    #             linewidth=2,
+    #             markersize=6,
+    #             label=col
+    #         )
+
+    #     # 스타일 및 제목
+    #     # ax.set_title("연령대별 월별 활성화 추이", fontsize=12, fontweight="bold", pad=10)
+    #     ax.set_xlabel("가입 월", fontsize=10)
+    #     ax.set_ylabel("활성화율 (%)", fontsize=10)
+    #     ax.tick_params(axis='x', rotation=45)
+    #     ax.grid(axis="y", linestyle="--", alpha=0.4)
+    #     ax.legend(title="연령대", bbox_to_anchor=(1.05, 1), loc="upper left", frameon=False)
+
+    #     # # 각 포인트 수치 표시
+    #     # for i, col in enumerate(pivot_df.columns):
+    #     #     for x, y in zip(pivot_df.index, pivot_df[col]):
+    #     #         ax.text(x, y + 0.5, f"{y:.1f}%", ha="center", va="bottom", fontsize=8)
+
+    #     # 테두리 정리
+    #     for spine in ["top", "right"]:
+    #         ax.spines[spine].set_visible(False)
+
+    #     plt.tight_layout()
+    #     st.pyplot(fig)
 
     
     # -------------------- (2) 유입 경로별 활성화율 --------------------
@@ -597,15 +718,20 @@ with tab3:
         (users_first_purchase["created_at_y"] - users_first_purchase["created_at_x"]).dt.days)
 
     # ------------------- KPI 카드 -------------------
+    # with col1:
+    #     avg_price = first_order_items["sale_price"].mean()
+    #     median_price = first_order_items["sale_price"].median()
+
+    #     st.markdown("<div class='big-metric'>첫 구매 금액 (Median)</div>", unsafe_allow_html=True)
+    #     st.markdown(f"<div class='big-value'>${median_price:.2f}</div>", unsafe_allow_html=True)
+
     with col1:
         avg_price = first_order_items["sale_price"].mean()
         median_price = first_order_items["sale_price"].median()
 
-        # st.markdown("<div class='big-metric'>Avg First Purchase</div>", unsafe_allow_html=True)
-        # st.markdown(f"<div class='big-value'>${avg_price:.2f}</div>", unsafe_allow_html=True)
-
-        st.markdown("<div class='big-metric'>첫 구매 금액 (Median)</div>", unsafe_allow_html=True)
+        st.markdown("<div class='big-metric'>첫 구매 금액 (중앙값)</div>", unsafe_allow_html=True)
         st.markdown(f"<div class='big-value'>${median_price:.2f}</div>", unsafe_allow_html=True)
+
 
 # ------------------- 그래프 (2개) 카테고리 TOP5, 첫구매 시점분포 -------------------
 
@@ -671,46 +797,6 @@ with tab3:
 
             plt.tight_layout()
             st.pyplot(fig)
-
-        # -------------------- (2) 첫 구매까지 걸린 기간 분포 --------------------
-        # with g2:
-        #     fig, ax = plt.subplots(figsize=(4.5, 4))
-        #     n, bins, patches = ax.hist(
-        #         users_first_purchase["ttfp_days"],
-        #         bins=20,
-        #         color="#3CB371",
-        #         alpha=0.8,
-        #         edgecolor="white",
-        #         linewidth=0.6
-        #     )
-
-        #     ax.set_title("첫 구매까지 걸린 기간 분포", fontsize=12, fontweight="bold", pad=10)
-        #     ax.set_xlabel("소요일자 (일 단위)", fontsize=10)
-        #     ax.set_ylabel("고유 유저 수", fontsize=10)
-        #     ax.grid(axis="y", linestyle="--", alpha=0.4)
-
-        #     # 평균선 추가
-        #     mean_ttfp = users_first_purchase["ttfp_days"].mean()
-        #     ax.axvline(mean_ttfp, color="red", linestyle="--", linewidth=1.5)
-
-        #     # 👉 평균선 오른쪽으로 살짝 띄운 위치에 텍스트 표시
-        #     offset = (ax.get_xlim()[1] - ax.get_xlim()[0]) * 0.015  # 전체 x축의 1.5% 정도 오른쪽
-        #     ax.text(
-        #         mean_ttfp + offset,     
-        #         ax.get_ylim()[1] * 0.9,   
-        #         f"평균 {mean_ttfp:.1f}일",
-        #         color="red",
-        #         fontsize=9,
-        #         ha="left",
-        #         va="bottom",
-        #         fontweight="bold"
-        #     )
-
-        #     for spine in ["top", "right"]:
-        #         ax.spines[spine].set_visible(False)
-
-        #     plt.tight_layout()
-        #     st.pyplot(fig)
 
 
         with g2:

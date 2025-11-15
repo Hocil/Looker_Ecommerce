@@ -104,7 +104,7 @@ else:
 
     # 2. KPI 지표 표시 (수정된 값 사용)
     st.header(f"{start_date.strftime('%Y-%m-%d')} ~ {end_date.strftime('%Y-%m-%d')} 핵심 성과 지표")
-    st.write("선택된 기간 동안의 순 방문자 수를 나타냅니다.")
+    st.info("선택된 기간 동안의 순 방문자 수를 나타냅니다.")
     st.metric("총 순 방문자 수 (Unique Users)", f"{total_unique_users:,.0f} 명")
 
     st.divider()
@@ -118,7 +118,7 @@ else:
     with tab1:
 
         st.subheader("주요 행동 전환 분석 (Funnel)")
-        st.write("사용자가 제품 탐색부터 구매 완료까지 각 단계에서 얼마나 전환되는지를 시각적으로 보여줍니다. 각 단계 사이의 이탈률을 파악할 수 있습니다.")
+        st.info("사용자가 제품 탐색부터 구매 완료까지 각 단계에서 얼마나 전환되는지를 시각적으로 보여줍니다. 각 단계 사이의 이탈률을 파악할 수 있습니다.")
         funnel_stages = [['department','product'],'cart','purchase']
         funnel_fig = create_funnel_chart(events, funnel_stages, start_date, end_date)
         if funnel_fig:
@@ -129,7 +129,7 @@ else:
         st.divider()
 
         st.subheader("사용자 행동 흐름 (Sankey)")
-        st.write("사용자들이 웹사이트 내에서 어떤 순서로 페이지를 이동하고 행동하는지 흐름을 시각화하여 보여줍니다. 주요 사용자 경로와 이탈 지점을 파악하는 데 유용합니다.")
+        st.info("사용자들이 웹사이트 내에서 어떤 순서로 페이지를 이동하고 행동하는지 흐름을 시각화하여 보여줍니다. 주요 사용자 경로와 이탈 지점을 파악하는 데 유용합니다.")
         sankey_fig = create_sankey_chart(events, start_date, end_date)
         if sankey_fig:
             st.plotly_chart(sankey_fig, use_container_width=True)
@@ -150,7 +150,7 @@ else:
                 return [f'background-color: {SECONDARY_COLOR}; color: white'] * len(row)
 
         st.subheader("전체 유입 경로 분포")
-        st.write("어떤 채널(e.g., Facebook, Google, Email)을 통해 사용자들이 유입되었는지 분포를 보여줍니다. 가장 효과적인 유입 채널을 파악할 수 있습니다.")
+        st.info("어떤 채널(e.g., Facebook, Google, Email)을 통해 사용자들이 유입되었는지 분포를 보여줍니다. 가장 효과적인 유입 채널을 파악할 수 있습니다.")
         dist_fig, dist_data = create_traffic_distribution_chart(users, start_date, end_date)
         if dist_fig:
             col1, col2 = st.columns([2, 1])
@@ -168,7 +168,7 @@ else:
         st.divider()
 
         st.subheader("유입 경로별 인구통계 분석 (국가 / 연령대)")
-        st.write("선택한 유입 경로를 통해 들어온 사용자들의 국가 분포와 연령대 분포를 분석합니다.")
+        st.info("선택한 유입 경로를 통해 들어온 사용자들의 국가 분포와 연령대 분포를 분석합니다.")
 
         # 1. 메인 화면에 필터 배치
         filter_col, _ = st.columns([1, 2])
@@ -223,13 +223,13 @@ else:
     
     with tab3:
         st.subheader("월별 매출 및 활성 사용자 수 (MAU)")
-        st.write("월별 총 매출과 해당 월에 한 번 이상 방문한 순수 사용자 수(MAU)의 추이를 함께 보여줍니다. 비즈니스의 성장성과 사용자 참여도를 동시에 파악할 수 있습니다.")
+        st.info("월별 총 매출과 해당 월에 한 번 이상 방문한 순수 사용자 수(MAU)의 추이를 함께 보여줍니다. 비즈니스의 성장성과 사용자 참여도를 동시에 파악할 수 있습니다.")
         mau_revenue_fig, _ = create_mau_revenue_chart(order_items, events, start_date, end_date)
         st.pyplot(mau_revenue_fig)
 
         st.divider()
         st.subheader("일일 활성 사용자 수 (DAU)")
-        st.write("선택한 기간 동안 매일 방문한 순수 사용자 수(DAU)의 추이를 보여줍니다. 단기적인 사용자 활동성과 이벤트 효과 등을 파악하는 데 유용합니다.")
+        st.info("선택한 기간 동안 매일 방문한 순수 사용자 수(DAU)의 추이를 보여줍니다. 단기적인 사용자 활동성과 이벤트 효과 등을 파악하는 데 유용합니다.")
         # 데이터에서 선택 가능한 월 목록 생성 ('YYYY-MM' 형식)
         available_months = ['전체 기간'] + sorted(
             events_master['created_at'].dt.to_period('M').astype(str).unique(),

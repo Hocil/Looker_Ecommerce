@@ -134,7 +134,7 @@ else:
 
     with tab1:
         st.subheader("사용자별 구매 횟수 분포")
-        st.write("전체 사용자 중 재구매자와 일회성 구매자의 비율을 파악합니다. 막대그래프는 특정 횟수만큼 구매한 사용자의 수를 보여줍니다.")
+        st.info("전체 사용자 중 재구매자와 일회성 구매자의 비율을 파악합니다. 막대그래프는 특정 횟수만큼 구매한 사용자의 수를 보여줍니다.")
 
         if not all_data or "order_items" not in all_data:
             st.error("주문(order_items) 데이터를 불러오는데 실패했습니다.")
@@ -158,7 +158,7 @@ else:
 
     with tab2:
         st.subheader("월별 첫 구매 고객 재구매율 분석")
-        st.write("각 월별로 발생한 총 구매 중, 기존 고객(재구매자)의 구매가 차지하는 비율을 보여줍니다. 이 비율이 높을수록 고객 충성도가 높다고 해석할 수 있습니다.")
+        st.info("각 월별로 발생한 총 구매 중, 기존 고객(재구매자)의 구매가 차지하는 비율을 보여줍니다. 이 비율이 높을수록 고객 충성도가 높다고 해석할 수 있습니다.")
 
         repeat_fig, repeat_df = create_repeat_purchaser_chart(orders_master)
 
@@ -182,7 +182,7 @@ else:
         # )
 
         st.subheader("2023년 월별 코호트 재구매율 히트맵")
-        st.write("특정 월에 첫 구매를 한 고객 그룹(코호트)이 시간이 지남에 따라 얼마나 다시 구매하는지 추적합니다. 각 행은 첫 구매월 그룹, 각 열은 첫 구매 후 경과한 개월 수를 의미합니다.")
+        st.info("특정 월에 첫 구매를 한 고객 그룹(코호트)이 시간이 지남에 따라 얼마나 다시 구매하는지 추적합니다. 각 행은 첫 구매월 그룹, 각 열은 첫 구매 후 경과한 개월 수를 의미합니다.")
         st.caption("※ 히트맵에서 Age = 0은 모든 코호트에서 100%입니다.")
 
         filter_col, _ = st.columns([1, 2])
@@ -214,7 +214,7 @@ else:
 
         st.subheader("주간 코호트 재구매율")
         # st.write("월별 분석보다 더 세분화하여, 특정 주에 첫 구매를 한 고객 그룹이 매주 얼마나 재방문하여 구매하는지 추적합니다. 단기적인 변화나 특정 이벤트의 효과를 분석하는 데 유용합니다.")
-        st.write("월별 분석보다 더 세분화하여, 특정 주에 첫 구매를 한 고객 그룹이 매주 얼마나 재방문하여 구매하는지 추적합니다.")
+        st.info("월별 분석보다 더 세분화하여, 특정 주에 첫 구매를 한 고객 그룹이 매주 얼마나 재방문하여 구매하는지 추적합니다.")
 
 
         # # --- 필터 위젯 ---
@@ -321,17 +321,18 @@ else:
 
     with tab3:
         st.subheader("요일/시간대별 재구매 패턴 심층 분석")
-        st.write("사용자의 첫 구매 요일과 실제 재구매가 발생한 요일에 따른 재구매자 수와 재구매 패턴을 확인합니다.")
+        st.info("사용자의 첫 구매 요일과 실제 재구매가 발생한 요일에 따른 재구매자 수와 재구매 패턴을 확인합니다.")
 
         # 1) 요일 패턴 분석
         weekday_fig, order_data, cohort_data = create_weekday_repeat_purchase_charts(orders_master, start_date, end_date)
 
         if weekday_fig:
             st.pyplot(weekday_fig)
-
+            st.info("사용자들이 실제로 재구매를 가장 많이 수행하는 요일을 확인할 수 있는 그래프입니다.")
             # 요일별 재구매자 수 막대 그래프
             if order_data is not None and not order_data.empty:
                 st.subheader("요일별 재구매자 수")
+
                 fig_bar, ax_bar = plt.subplots()
                 ax_bar.bar(order_data["Weekday"], order_data["Repeat_Orders"])
                 ax_bar.set_xlabel("요일")
@@ -360,7 +361,7 @@ else:
         # 2) 2023년 HAU & 시간대별 재구매율
         st.divider()
         st.subheader("2023년 HAU & 시간대별 재구매율")
-        st.write("2023년 동안 시간대별 활성 사용자 수(HAU)와 재구매율을 함께 비교하여, 어떤 시간대에 재구매가 활발한지 확인합니다.")
+        st.info("2023년 동안 시간대별 활성 사용자 수(HAU)와 재구매율을 함께 비교하여, 어떤 시간대에 재구매가 활발한지 확인합니다.")
 
         hourly_fig, hourly_df = create_hourly_hau_repeat_rate_chart(orders_master)
 
@@ -382,7 +383,7 @@ else:
         # 3) 주중 vs 주말 재구매율 비교
         st.divider()
         st.subheader("주중 vs 주말 재구매율 비교")
-        st.write("전체 재구매 활동이 주중과 주말 중 어느 시기에 더 활발하게 일어나는지 비교 분석합니다.")
+        st.info("전체 재구매 활동이 주중과 주말 중 어느 시기에 더 활발하게 일어나는지 비교 분석합니다.")
         weekday_fig, weekday_tbl = create_weekday_weekend_chart(orders_master, start_date, end_date)
         
         if weekday_fig:

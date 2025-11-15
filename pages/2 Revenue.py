@@ -24,80 +24,129 @@ st.set_page_config(
 st.title("💰 매출 분석")
 st.markdown("### Revenue(매출) 현황")
 
+# # ---------------- 사이드바 ----------------
+# st.sidebar.header("Filters")
+
+# ## 1. 기간 필터 (연도 제거 → 월만)
+# months = list(range(1, 13))
+# months_with_all = ["All"] + months
+# selected_months = st.sidebar.multiselect(
+#     "Month",
+#     options=months_with_all,
+#     default=["All"]
+# )
+# # All 선택 시 전체 월로 처리
+# if "All" in selected_months:
+#     selected_months = months
+
+
+# ## 2. 주문 상태 필터
+# status_filter = st.sidebar.multiselect(
+#     "Order Status",
+#     options=orders["status"].unique().tolist(),
+#     default="Complete"
+# )
+
+# ## 3. 사용자 필터
+# gender_filter = st.sidebar.selectbox("Gender", ["All", "M", "F"])
+
+# # 연령대 구간 정의
+# age_bins = [0, 20, 30, 40, 50, 60, 100]
+# age_labels = ["<20", "20s", "30s", "40s", "50s", "60+"]
+# users["age_group"] = pd.cut(users["age"], bins=age_bins, labels=age_labels, right=False)
+
+# age_options = ["All"] + age_labels
+# age_filter = st.sidebar.multiselect(
+#     "Age Group",
+#     options=age_options,
+#     default=["All"]
+# )
+# if "All" in age_filter:
+#     age_filter = age_labels
+
+
+# # 트래픽 소스 필터
+# traffic_sources = users["traffic_source"].dropna().unique().tolist()
+# traffic_options = ["All"] + traffic_sources
+# traffic_filter = st.sidebar.multiselect(
+#     "Traffic Source",
+#     options=traffic_options,
+#     default=["All"]
+# )
+# if "All" in traffic_filter:
+#     traffic_filter = traffic_sources
+
+
+# ## 4. 상품 필터
+# categories = products["category"].dropna().unique().tolist()
+# category_options = ["All"] + categories
+# category_filter = st.sidebar.multiselect(
+#     "Category",
+#     options=category_options,
+#     default=["All"]
+# )
+# if "All" in category_filter:
+#     category_filter = categories
+
+
+# brands = products["brand"].dropna().unique().tolist()
+# brand_options = ["All"] + brands
+# brand_filter = st.sidebar.multiselect(
+#     "Brand",
+#     options=brand_options,
+#     default=["All"]
+# )
+# if "All" in brand_filter:
+#     brand_filter = brands
+
 # ---------------- 사이드바 ----------------
-st.sidebar.header("Filters")
+st.sidebar.header("컨트롤 패널")
 
 ## 1. 기간 필터 (연도 제거 → 월만)
-months = list(range(1, 13))
-months_with_all = ["All"] + months
 selected_months = st.sidebar.multiselect(
-    "Month",
+    "월 선택",   # ✔ Month → 월 선택
     options=months_with_all,
     default=["All"]
 )
-# All 선택 시 전체 월로 처리
-if "All" in selected_months:
-    selected_months = months
-
 
 ## 2. 주문 상태 필터
 status_filter = st.sidebar.multiselect(
-    "Order Status",
+    "주문 상태",   # ✔ Order Status → 주문 상태
     options=orders["status"].unique().tolist(),
     default="Complete"
 )
 
 ## 3. 사용자 필터
-gender_filter = st.sidebar.selectbox("Gender", ["All", "M", "F"])
+gender_filter = st.sidebar.selectbox(
+    "성별",   # ✔ Gender → 성별
+    ["All", "M", "F"]
+)
 
-# 연령대 구간 정의
-age_bins = [0, 20, 30, 40, 50, 60, 100]
-age_labels = ["<20", "20s", "30s", "40s", "50s", "60+"]
-users["age_group"] = pd.cut(users["age"], bins=age_bins, labels=age_labels, right=False)
-
-age_options = ["All"] + age_labels
 age_filter = st.sidebar.multiselect(
-    "Age Group",
+    "연령대",   # ✔ Age Group → 연령대
     options=age_options,
     default=["All"]
 )
-if "All" in age_filter:
-    age_filter = age_labels
 
-
-# 트래픽 소스 필터
-traffic_sources = users["traffic_source"].dropna().unique().tolist()
-traffic_options = ["All"] + traffic_sources
 traffic_filter = st.sidebar.multiselect(
-    "Traffic Source",
+    "유입 경로",   # ✔ Traffic Source → 유입 경로
     options=traffic_options,
     default=["All"]
 )
-if "All" in traffic_filter:
-    traffic_filter = traffic_sources
-
 
 ## 4. 상품 필터
-categories = products["category"].dropna().unique().tolist()
-category_options = ["All"] + categories
 category_filter = st.sidebar.multiselect(
-    "Category",
+    "카테고리",   # ✔ Category → 카테고리
     options=category_options,
     default=["All"]
 )
-if "All" in category_filter:
-    category_filter = categories
 
-
-brands = products["brand"].dropna().unique().tolist()
-brand_options = ["All"] + brands
 brand_filter = st.sidebar.multiselect(
-    "Brand",
+    "브랜드",   # ✔ Brand → 브랜드
     options=brand_options,
     default=["All"]
 )
-if "All" in brand_filter:
-    brand_filter = brands
+
 
 
 # ---------------- 필터 적용 ----------------

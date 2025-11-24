@@ -426,7 +426,8 @@ def create_weekday_repeat_purchase_charts(orders_df, start_date, end_date):
 
     # --- 시각화 ---
 
-    fig, (ax_line_both,) = plt.subplots(1, 1, figsize=(18, 5.5), constrained_layout=True)
+    # fig, (ax_line_both,) = plt.subplots(1, 1, figsize=(18, 5.5), constrained_layout=True)
+    fig, ax_line_both = plt.subplots(1, 1, figsize=(18, 5.5), constrained_layout=True)
 
     x = np.arange(7)
     week_labels = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']

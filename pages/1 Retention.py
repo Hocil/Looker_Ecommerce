@@ -294,9 +294,9 @@ else:
             week_options = ['All'] + list(range(1, 6))
             selected_week = st.selectbox("주차 필터 (Wn):", week_options, help="해당 월의 n번째 주에 시작된 코호트만 필터링합니다.")
 
-        col_slider, _ = st.columns([2, 1])
-        with col_slider:
-            max_age_option = st.slider("최대 경과 주 수:", 1, 52, 12)
+        # col_slider, _ = st.columns([2, 1])
+        # with col_slider:
+        #     max_age_option = st.slider("최대 경과 주 수:", 1, 52, 12)
 
         show_annotations = st.checkbox("히트맵에 값(%) 표시", value=True)
         st.divider()
@@ -307,7 +307,6 @@ else:
                 orders_master, 
                 selected_month,
                 selected_week,
-                max_age_option, 
                 show_annotations
             )
 

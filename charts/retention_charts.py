@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 from matplotlib.ticker import PercentFormatter
+from matplotlib.ticker import StrMethodFormatter 
 import koreanize_matplotlib
 from style_config import apply_common_style, HIGHLIGHT_COLOR,SECONDARY_COLOR, SEQUENTIAL_PALETTE, PRIMARY_COLOR, ACCENT_COLOR_2
 
@@ -122,15 +123,6 @@ def create_advanced_cohort_heatmap(orders_df, max_age_m, show_annotations=True):
 
     # 히트맵 시각화
     fig, ax = plt.subplots(figsize=(12, max(4, 0.6 * len(heat_pct.index))))
-    # sns.heatmap(
-    #     heat_pct, annot=show_annotations, fmt=".1f", cmap=SEQUENTIAL_PALETTE,
-    #     cbar_kws={'label': '재구매율 (%)'}, linewidths=.3, linecolor='white', ax=ax
-    # )
-    # ax.set_xlabel("첫 구매 후 경과 개월 수")
-    # ax.set_ylabel("코호트 월 (첫 구매월 · N=표본크기)")
-    # ax.set_yticklabels(ax.get_yticklabels(), rotation=0)
-    # apply_common_style(fig, ax, title="월별 코호트 재구매율 히트맵 (Age≥1)")
-    # fig.tight_layout()
 
     sns.heatmap(
         heat_pct, annot=show_annotations, fmt=".1f", cmap=SEQUENTIAL_PALETTE,
@@ -217,87 +209,6 @@ def create_repeat_purchaser_chart(orders_df):
     fig.tight_layout(rect=[0,0,0.86,1])
 
     return fig, m2023
-
-# @st.cache_data
-# def create_weekly_cohort_heatmap(orders_df, selected_month, max_age_w, show_annotations=True):
-#     """
-#     선택된 월에 시작된 주간 코호트의 재구매율을 분석하고 히트맵을 생성합니다.
-#     """
-    
-#     # 0) 원천 정리
-#     use_cols = [c for c in ['user_id', 'created_at', 'status'] if c in orders_df.columns]
-#     src = orders_df.loc[:, use_cols].copy()
-#     src = src[src['user_id'].notna()].copy()
-#     src['created_at'] = pd.to_datetime(src['created_at'], utc=True, errors='coerce')
-#     src = src.dropna(subset=['created_at']).sort_values(['user_id','created_at'])
-#     if 'status' in src.columns:
-#         # --- 수정: 필터링할 주문 상태 확장 ---
-#         src['status'] = src['status'].astype(str).str.strip().str.lower()
-#         src = src[src['status'] == 'complete']
-#     if src.empty:
-#         st.warning("상태가 'Complete'인 주문이 없습니다.")
-#         return None, None
-#     REF = pd.Timestamp('1970-01-05', tz='UTC')
-#     src['week_start'] = src['created_at'].dt.normalize() - pd.to_timedelta(src['created_at'].dt.dayofweek, unit='D')
-#     src['week_idx'] = ((src['week_start'] - REF).dt.days // 7).astype(int)
-#     last_week_idx = int(src['week_idx'].max())
-
-#     # 1) 첫 구매(코호트) 계산
-#     first = src.groupby('user_id', as_index=False)['created_at'].min().rename(columns={'created_at':'first_time'})
-#     first['cohort_week_start'] = first['first_time'].dt.normalize() - pd.to_timedelta(first['first_time'].dt.dayofweek, unit='D')
-#     first['cohort_week_idx'] = ((first['cohort_week_start'] - REF).dt.days // 7).astype(int)
-#     first['cohort_month'] = first['cohort_week_start'].dt.to_period('M').astype(str)
-
-#     # 수정: 선택된 월의 코호트만 필터링
-#     cohorts_in_month = first[first['cohort_month'] == selected_month].copy()
-#     if cohorts_in_month.empty:
-#         st.warning(f"{selected_month}에 시작된 코호트 그룹이 없습니다.")
-#         return None, None
-
-#     # 라벨 생성
-#     iso = cohorts_in_month['cohort_week_start'].dt.isocalendar()
-#     cohorts_in_month['cohort_week_lbl'] = iso['year'].astype(str) + '-W' + iso['week'].astype(str).str.zfill(2)
-#     cohorts_in_month['week_of_month'] = ((cohorts_in_month['cohort_week_start'].dt.day - 1) // 7 + 1).astype(int)
-#     cohorts_in_month['cohort_mweek_lbl'] = (cohorts_in_month['cohort_month'] + ' W' + cohorts_in_month['week_of_month'].astype(str) + ' (' + cohorts_in_month['cohort_week_lbl'] + ')')
-    
-#     cohort_size = cohorts_in_month.groupby('cohort_week_idx')['user_id'].nunique().rename('cohort_size')
-
-#     # (이하 계산 로직은 이전과 동일하나, 'cohorts_in_month'를 사용)
-#     lab = src.merge(cohorts_in_month[['user_id','cohort_week_idx']], on='user_id', how='inner')
-#     if lab.empty: return None, None
-#     lab['age_w'] = lab['week_idx'] - lab['cohort_week_idx']
-#     lab = lab[(lab['age_w'] >= 0) & (lab['age_w'] <= max_age_w)].copy()
-#     cohort_weeks = np.sort(cohorts_in_month['cohort_week_idx'].unique())
-#     age_vals = np.arange(0, max_age_w+1)
-#     grid = pd.MultiIndex.from_product([cohort_weeks, age_vals], names=['cohort_week_idx','age_w']).to_frame(index=False)
-#     grid = grid[(grid['cohort_week_idx'] + grid['age_w']) <= last_week_idx].copy()
-#     counts = lab.groupby(['cohort_week_idx','age_w'])['user_id'].nunique().rename('active_users').reset_index()
-#     counts = grid.merge(counts, on=['cohort_week_idx','age_w'], how='left').fillna({'active_users':0})
-#     counts = counts.merge(cohort_size, on='cohort_week_idx', how='left')
-#     counts['retention_rate'] = counts['active_users'] / counts['cohort_size']
-#     heat = counts.pivot(index='cohort_week_idx', columns='age_w', values='retention_rate').sort_index().sort_index(axis=1)
-#     if 0 in heat.columns:
-#         heat = heat.loc[:, heat.columns != 0]
-#     lbl_map = (cohorts_in_month[['cohort_week_idx','cohort_mweek_lbl']].drop_duplicates().set_index('cohort_week_idx')['cohort_mweek_lbl'])
-#     cohort_idx = heat.index.copy()
-#     base_labels = cohort_idx.map(lbl_map)
-#     n_map = cohort_size.reindex(cohort_idx).fillna(0).astype(int).map(lambda x: f"{x:,}")
-#     row_labels = base_labels + ' · N=' + n_map
-#     heat.index = row_labels
-#     heat_pct = heat * 100
-
-#     # 히트맵 시각화
-#     fig, ax = plt.subplots(figsize=(12, max(4, 0.7 * len(heat_pct))))
-#     sns.heatmap(
-#         heat_pct, annot=show_annotations, fmt=".1f", cmap=SEQUENTIAL_PALETTE,
-#         cbar_kws={'label':'재구매율 (%)'}, linewidths=.3, linecolor='white', ax=ax)
-#     ax.set_xlabel("첫 구매 후 경과 주 수")
-#     ax.set_ylabel("코호트 주 (YYYY-MM Wn (ISO 주) · N)")
-#     ax.set_yticklabels(ax.get_yticklabels(), rotation=0)
-#     apply_common_style(fig, ax, title=f"{selected_month} 시작 주간 코호트 재구매율 (Age≥1)")
-#     fig.tight_layout()
-
-#     return fig, heat
 
 @st.cache_data
 def create_daily_cohort_heatmap(orders_df, selected_month, selected_week, max_age_d, show_annotations=True):
@@ -509,129 +420,70 @@ def create_weekday_repeat_purchase_charts(orders_df, start_date, end_date):
         
     # ---------------- Aggregations ----------------
     order_grp  = agg_weekday(df['order_wd'],  df)   # 구매일 기준
-    cohort_grp = agg_weekday(df['cohort_wd'], df)   # 코호트 시작일 기
+    cohort_grp = agg_weekday(df['cohort_wd'], df)   # 코호트 시작일 기준
         
     # --- 시각화 ---
-    # fig, (ax_bars_ord, ax_bars_coh, ax_line_both) = plt.subplots(1, 3, figsize=(18, 5.5), constrained_layout=True)
-    fig, (  ax_line_both) = plt.subplots(1, 1, figsize=(18, 5.5), constrained_layout=True)
+
+    fig, (ax_line_both,) = plt.subplots(1, 1, figsize=(18, 5.5), constrained_layout=True)
     
     x = np.arange(7)
     week_labels = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
 
-    # Plot 3: Combined lines
-    ax_line_both.plot(x, order_grp['Repeat_Rate'], marker='o', color=PRIMARY_COLOR, label='재구매일 기준')
-    ax_line_both.plot(x, cohort_grp['Repeat_Rate'], marker='o', color=ACCENT_COLOR_2, label='첫구매일 기준')
-    ax_line_both.set(ylabel="재구매율 (%)", xticks=x, xticklabels=week_labels)
-    ax_line_both.yaxis.set_major_formatter(PercentFormatter(xmax=1.0, decimals=1))
-    set_padded_ylim(ax_line_both, order_grp['Repeat_Rate'].values, cohort_grp['Repeat_Rate'].values)
+    # 1) 그릴 때만 퍼센트 단위로 변환 (0~1 → 0~100)
+    order_rate_pct  = order_grp['Repeat_Rate']  * 100
+    cohort_rate_pct = cohort_grp['Repeat_Rate'] * 100
+
+    # 2) 라인 그래프 그리기
+    ax_line_both.plot(
+        x,
+        order_rate_pct,
+        marker='o',
+        color=PRIMARY_COLOR,
+        label='재구매일 기준'
+    )
+    ax_line_both.plot(
+        x,
+        cohort_rate_pct,
+        marker='o',
+        color=ACCENT_COLOR_2,
+        label='첫구매일 기준'
+    )
+
+    # 3) 축/레이블 설정
+    ax_line_both.set(
+        ylabel="재구매율 (%)",
+        xticks=x,
+        xticklabels=week_labels
+    )
+
+    # 4) y축 포맷을 '숫자 + %' 형태로 직접 지정
+    ax_line_both.yaxis.set_major_formatter(StrMethodFormatter("{x:.1f}%"))
+
+    # 5) y축 범위는 퍼센트 값 기준으로 여유 있게 패딩
+    set_padded_ylim(ax_line_both, order_rate_pct.values, cohort_rate_pct.values)
+
     ax_line_both.legend(loc='best')
     apply_common_style(fig, ax_line_both, title="요일별 재구매율")
     
     return fig, order_grp, cohort_grp
 
-# HAU & 시간대별 재구매율 함수 추가
-# @st.cache_data
-# def create_hourly_hau_repeat_rate_chart(orders_df):
-#     """
-#     2023년 기준 시간대별 HAU(유니크 구매자 수)와 재구매율을 함께 보여주는 라인 차트 생성.
-#     """
-#     use_cols = [c for c in ['user_id', 'created_at', 'status'] if c in orders_df.columns]
-#     src = orders_df.loc[:, use_cols].copy()
-#     src = src[src['user_id'].notna()]
+    # --- 시각화 ---
+    # fig, (  ax_line_both) = plt.subplots(1, 1, figsize=(18, 5.5), constrained_layout=True)
+    
+    # x = np.arange(7)
+    # week_labels = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
 
-#     # 상태 필터
-#     if 'status' in src.columns:
-#         src['status'] = src['status'].astype(str).str.strip().str.lower()
-#         src = src[src['status'] == 'complete'].drop(columns=['status'])
+    # # Plot 3: Combined lines
+    # ax_line_both.plot(x, order_grp['Repeat_Rate'], marker='o', color=PRIMARY_COLOR, label='재구매일 기준')
+    # ax_line_both.plot(x, cohort_grp['Repeat_Rate'], marker='o', color=ACCENT_COLOR_2, label='첫구매일 기준')
+    # ax_line_both.set(ylabel="재구매율 (%)", xticks=x, xticklabels=week_labels)
+    # ax_line_both.yaxis.set_major_formatter(PercentFormatter(xmax=1.0, decimals=1))
+    # set_padded_ylim(ax_line_both, order_grp['Repeat_Rate'].values, cohort_grp['Repeat_Rate'].values)
+    # ax_line_both.legend(loc='best')
+    # apply_common_style(fig, ax_line_both, title="요일별 재구매율")
+    
+    # return fig, order_grp, cohort_grp
 
-#     if src.empty:
-#         st.warning("상태가 'Complete'인 주문이 없습니다.")
-#         return None, None
-
-#     # 시간 파싱
-#     src['created_at'] = pd.to_datetime(src['created_at'], utc=True, errors='coerce')
-#     src = src.dropna(subset=['created_at'])
-#     if src.empty:
-#         st.warning("유효한 주문 시간이 없습니다.")
-#         return None, None
-
-#     # 2023년만 사용
-#     src_2023 = src[src['created_at'].dt.year == 2023].copy()
-#     if src_2023.empty:
-#         st.warning("2023년 주문 데이터가 없습니다.")
-#         return None, None
-
-#     # 사용자별 첫 구매 시각
-#     first = (
-#         src_2023.groupby('user_id', as_index=False)['created_at']
-#         .min()
-#         .rename(columns={'created_at': 'first_time'})
-#     )
-
-#     lab = src_2023.merge(first, on='user_id', how='inner')
-#     lab['is_repeat'] = lab['created_at'] > lab['first_time']
-#     lab['hour'] = lab['created_at'].dt.hour  # 0~23시
-
-#     # 0~23시 모두 포함되도록 보정
-#     hours_idx = pd.Index(range(24), name='hour')
-#     agg = (
-#         lab.groupby('hour')
-#            .agg(
-#                HAU=('user_id', 'nunique'),
-#                total_orders=('user_id', 'count'),
-#                repeat_orders=('is_repeat', 'sum')
-#            )
-#            .reindex(hours_idx, fill_value=0)
-#            .reset_index()
-#     )
-
-#     agg['repeat_rate'] = np.where(
-#         agg['total_orders'] > 0,
-#         agg['repeat_orders'] / agg['total_orders'],
-#         np.nan
-#     )
-
-#     # 19–23시는 재구매율 관측 불가로 처리 (라인이 끊기도록 NaN)
-#     agg.loc[agg['hour'].between(19, 23), 'repeat_rate'] = np.nan
-
-#     # --- 시각화 ---
-#     fig, ax1 = plt.subplots(figsize=(12, 5))
-
-#     x = agg['hour']
-#     # 왼쪽 축: HAU
-#     line1 = ax1.plot(
-#         x,
-#         agg['HAU'],
-#         marker='o',
-#         linewidth=2,
-#         color=HIGHLIGHT_COLOR,
-#         label='HAU (유니크 구매자 수)'
-#     )
-#     ax1.set_xlabel("시간대 (시)")
-#     ax1.set_ylabel("HAU (유니크 구매자 수)")
-
-#     # 오른쪽 축: 재구매율
-#     ax2 = ax1.twinx()
-#     line2 = ax2.plot(
-#         x,
-#         agg['repeat_rate'],
-#         marker='s',
-#         linewidth=2,
-#         color=PRIMARY_COLOR,
-#         label='재구매율'
-#     )
-#     ax2.set_ylabel("재구매율 (%)")
-#     ax2.yaxis.set_major_formatter(PercentFormatter(xmax=1.0, decimals=1))
-
-#     # 범례 합치기
-#     lines = line1 + line2
-#     labels = [l.get_label() for l in lines]
-#     ax1.legend(lines, labels, loc='upper right')
-
-#     apply_common_style(fig, ax1, title="2023년 HAU & 시간대별 재구매율")
-#     fig.tight_layout()
-
-#     return fig, agg
 @st.cache_data
 def create_hourly_hau_repeat_rate_chart(orders_df):
     """
@@ -836,26 +688,10 @@ def create_weekday_weekend_chart(orders_df, start_date, end_date):
         color=[PRIMARY_COLOR, HIGHLIGHT_COLOR],
         edgecolor='none'
     )
-    
-    # # y축 범위: 최소 0.08%는 보장하되, 실제 최대값보다 조금 여유 있게
-    # max_rate = float(np.nanmax(g['Rate'])) if len(g) else 0.0
-    # ymax = max(0.0008, max_rate * 1.1)  # 실제 값보다 10% 정도 여유
-    # ax.set_ylim(0, ymax)
+
 
     # 눈금은 그대로 0.00%, 0.02%, 0.04%, 0.06%, 0.08% 유지
     ax.set_yticks([0.0, 0.0002, 0.0004, 0.0006, 0.0008])
-
-    # fig, ax = plt.subplots(figsize=(7, 5))
-    # bars = ax.bar(
-    #     g['Group'],
-    #     g['Rate'],
-    #     color=[PRIMARY_COLOR, HIGHLIGHT_COLOR],  # SECONDARY_COLOR 대신 HIGHLIGHT_COLOR 사용
-    #     edgecolor='none'
-    # )
-    
-    # # y축 범위/눈금 고정: 0.00% ~ 0.08% (0, 0.02, 0.04, 0.06, 0.08)
-    # ax.set_ylim(0, 0.0008)
-    # ax.set_yticks([0.0, 0.0002, 0.0004, 0.0006, 0.0008])
 
     # y축 범위: 최소 0.08%는 보장하되, 실제 최대값보다 조금 여유 있게
     max_rate = float(np.nanmax(g['Rate'])) if len(g) else 0.0
@@ -882,61 +718,6 @@ def create_weekday_weekend_chart(orders_df, start_date, end_date):
     fig.tight_layout()
 
     return fig, tbl
-
-
-    # # 막대 위 라벨: 소수 셋째 자리까지 0.074% 형태
-    # for rect, r in zip(bars, g['Rate']):
-    #     ax.annotate(
-    #         f"{r*100:.3f}%",
-    #         xy=(rect.get_x() + rect.get_width()/2, r),
-    #         xytext=(0, 6),
-    #         textcoords='offset points',
-    #         ha='center',
-    #         va='bottom'
-    #     )
-                    
-    # # y축 포맷: 0.00%, 0.02% ... 형식
-    # ax.yaxis.set_major_formatter(PercentFormatter(xmax=1.0, decimals=2))
-    # ax.set_ylabel("재구매율 (%)")
-    # # ✨ 제목도 주문일 기준 문구로 통일
-    # apply_common_style(fig, ax, title="주문일 기준 주중 vs 주말 재구매율 비교")
-    # fig.tight_layout()
-
-    # return fig, tbl
-
-    # g = (df.groupby('is_weekend', as_index=False)
-    #        .agg(Repeaters=('active_users','sum'), Exposure=('cohort_size','sum')))
-    # g['Rate'] = np.where(g['Exposure']>0, g['Repeaters']/g['Exposure'], np.nan)
-    # g['Group'] = np.where(g['is_weekend'], '주말 (토+일)', '주중 (월–금)')
-    # g = g.sort_values('is_weekend').reset_index(drop=True)
-
-    # # 테이블 생성
-    # tbl = pd.DataFrame({
-    #     '구분': g['Group'],
-    #     '재구매자 수': g['Repeaters'].astype(int),
-    #     '전체 코호트 크기': g['Exposure'].astype(int),
-    #     '재구매율 (%)': (g['Rate']*100).round(3)
-    # })
-
-    # # 막대 차트 생성
-    # fig, ax = plt.subplots(figsize=(7, 5))
-    # bars = ax.bar(g['Group'], g['Rate'], color=[PRIMARY_COLOR, SECONDARY_COLOR], edgecolor='none')
-    
-    # ymax = float(np.nanmax(g['Rate'])) if len(g) else 0.0
-    # pad = ymax * 0.15 if ymax > 0 else 0.01
-    # ax.set_ylim(0, ymax + pad)
-
-    # for rect, r in zip(bars, g['Rate']):
-    #     ax.annotate(f"{r*100:.2f}%", xy=(rect.get_x() + rect.get_width()/2, r),
-    #                 xytext=(0, 6), textcoords='offset points', ha='center', va='bottom')
-                    
-    # ax.yaxis.set_major_formatter(PercentFormatter(xmax=1.0, decimals=1))
-    # ax.set_ylabel("재구매율 (%)")
-    # apply_common_style(fig, ax, title="주중 vs 주말 재구매율 비교 (Age ≥ 1)")
-    # fig.tight_layout()
-
-    # return fig, tbl
-
 
 @st.cache_data
 def create_weekly_cohort_heatmap(orders_df, selected_month, selected_week, max_age_w, show_annotations=True):
@@ -1040,14 +821,3 @@ def create_weekly_cohort_heatmap(orders_df, selected_month, selected_week, max_a
     fig.tight_layout()
 
     return fig, heat
-
-    # sns.heatmap(
-    #     heat_pct, annot=show_annotations, fmt=".1f", cmap=SEQUENTIAL_PALETTE,
-    #     cbar_kws={'label':'재구매율 (%)'}, linewidths=.3, linecolor='white', ax=ax)
-    # ax.set_xlabel("첫 구매 후 경과 주 수")
-    # ax.set_ylabel("코호트 주 (YYYY-MM Wn (ISO 주) · N)")
-    # ax.set_yticklabels(ax.get_yticklabels(), rotation=0)
-    # apply_common_style(fig, ax, title=f"{selected_month} (W{selected_week if selected_week != 'All' else '전체'}) 주간 코호트 재구매율")
-    # fig.tight_layout()
-
-    # return fig, heat

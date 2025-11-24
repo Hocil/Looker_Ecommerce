@@ -422,10 +422,12 @@ def create_weekday_repeat_purchase_charts(orders_df, start_date, end_date):
     order_grp  = agg_weekday(df['order_wd'],  df)   # 구매일 기준
     cohort_grp = agg_weekday(df['cohort_wd'], df)   # 코호트 시작일 기준
         
+
+
     # --- 시각화 ---
 
     fig, (ax_line_both,) = plt.subplots(1, 1, figsize=(18, 5.5), constrained_layout=True)
-    
+
     x = np.arange(7)
     week_labels = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
 
@@ -433,39 +435,80 @@ def create_weekday_repeat_purchase_charts(orders_df, start_date, end_date):
     order_rate_pct  = order_grp['Repeat_Rate']  * 100
     cohort_rate_pct = cohort_grp['Repeat_Rate'] * 100
 
-    # 2) 라인 그래프 그리기
-    ax_line_both.plot(
-        x,
-        order_rate_pct,
-        marker='o',
-        color=PRIMARY_COLOR,
-        label='재구매일 기준'
-    )
-    ax_line_both.plot(
-        x,
-        cohort_rate_pct,
-        marker='o',
-        color=ACCENT_COLOR_2,
-        label='첫구매일 기준'
-    )
+    # 2) 라인 그래프
+    ax_line_both.plot(x, order_rate_pct,  marker='o', color=PRIMARY_COLOR,   label='재구매일 기준')
+    ax_line_both.plot(x, cohort_rate_pct, marker='o', color=ACCENT_COLOR_2,  label='첫구매일 기준')
 
-    # 3) 축/레이블 설정
+    # 3) 축/레이블
     ax_line_both.set(
         ylabel="재구매율 (%)",
         xticks=x,
         xticklabels=week_labels
     )
 
-    # 4) y축 포맷을 '숫자 + %' 형태로 직접 지정
-    ax_line_both.yaxis.set_major_formatter(StrMethodFormatter("{x:.1f}%"))
+    # 🔹 y축 범위/눈금 직접 세팅
+    all_vals = np.r_[order_rate_pct.values, cohort_rate_pct.values]
+    max_val  = float(np.nanmax(all_vals)) if all_vals.size else 0.1
 
-    # 5) y축 범위는 퍼센트 값 기준으로 여유 있게 패딩
-    set_padded_ylim(ax_line_both, order_rate_pct.values, cohort_rate_pct.values)
+    # 예: 최대값이 0.15% 정도면 0.20%까지 보이게
+    ylim_max = max(0.20, np.ceil(max_val * 10) / 10)   # 0.1 단위 올림
+    ax_line_both.set_ylim(0, ylim_max)
+
+    # 0.00%, 0.05%, 0.10% ... 이런 식으로 보이게
+    yticks = np.linspace(0, ylim_max, 5)
+    ax_line_both.set_yticks(yticks)
+
+    # 🔹 소수 둘째 자리까지 보여주기 (0.08% 등)
+    ax_line_both.yaxis.set_major_formatter(StrMethodFormatter("{x:.2f}%"))
 
     ax_line_both.legend(loc='best')
     apply_common_style(fig, ax_line_both, title="요일별 재구매율")
-    
+
     return fig, order_grp, cohort_grp
+    # # --- 시각화 ---
+
+    # fig, (ax_line_both,) = plt.subplots(1, 1, figsize=(18, 5.5), constrained_layout=True)
+    
+    # x = np.arange(7)
+    # week_labels = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
+
+    # # 1) 그릴 때만 퍼센트 단위로 변환 (0~1 → 0~100)
+    # order_rate_pct  = order_grp['Repeat_Rate']  * 100
+    # cohort_rate_pct = cohort_grp['Repeat_Rate'] * 100
+
+    # # 2) 라인 그래프 그리기
+    # ax_line_both.plot(
+    #     x,
+    #     order_rate_pct,
+    #     marker='o',
+    #     color=PRIMARY_COLOR,
+    #     label='재구매일 기준'
+    # )
+    # ax_line_both.plot(
+    #     x,
+    #     cohort_rate_pct,
+    #     marker='o',
+    #     color=ACCENT_COLOR_2,
+    #     label='첫구매일 기준'
+    # )
+
+    # # 3) 축/레이블 설정
+    # ax_line_both.set(
+    #     ylabel="재구매율 (%)",
+    #     xticks=x,
+    #     xticklabels=week_labels
+    # )
+
+    # # 4) y축 포맷을 '숫자 + %' 형태로 직접 지정
+    # ax_line_both.yaxis.set_major_formatter(StrMethodFormatter("{x:.1f}%"))
+
+    # # 5) y축 범위는 퍼센트 값 기준으로 여유 있게 패딩
+    # set_padded_ylim(ax_line_both, order_rate_pct.values, cohort_rate_pct.values)
+
+    # ax_line_both.legend(loc='best')
+    # apply_common_style(fig, ax_line_both, title="요일별 재구매율")
+    
+    # return fig, order_grp, cohort_grp
 
     # --- 시각화 ---
     # fig, (  ax_line_both) = plt.subplots(1, 1, figsize=(18, 5.5), constrained_layout=True)

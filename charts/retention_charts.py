@@ -466,173 +466,326 @@ def create_weekday_repeat_purchase_charts(orders_df, start_date, end_date):
     apply_common_style(fig, ax_line_both, title="요일별 재구매율")
 
     return fig, order_grp, cohort_grp
-    # # --- 시각화 ---
-
-    # fig, (ax_line_both,) = plt.subplots(1, 1, figsize=(18, 5.5), constrained_layout=True)
-    
-    # x = np.arange(7)
-    # week_labels = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
-
-    # # 1) 그릴 때만 퍼센트 단위로 변환 (0~1 → 0~100)
-    # order_rate_pct  = order_grp['Repeat_Rate']  * 100
-    # cohort_rate_pct = cohort_grp['Repeat_Rate'] * 100
-
-    # # 2) 라인 그래프 그리기
-    # ax_line_both.plot(
-    #     x,
-    #     order_rate_pct,
-    #     marker='o',
-    #     color=PRIMARY_COLOR,
-    #     label='재구매일 기준'
-    # )
-    # ax_line_both.plot(
-    #     x,
-    #     cohort_rate_pct,
-    #     marker='o',
-    #     color=ACCENT_COLOR_2,
-    #     label='첫구매일 기준'
-    # )
-
-    # # 3) 축/레이블 설정
-    # ax_line_both.set(
-    #     ylabel="재구매율 (%)",
-    #     xticks=x,
-    #     xticklabels=week_labels
-    # )
-
-    # # 4) y축 포맷을 '숫자 + %' 형태로 직접 지정
-    # ax_line_both.yaxis.set_major_formatter(StrMethodFormatter("{x:.1f}%"))
-
-    # # 5) y축 범위는 퍼센트 값 기준으로 여유 있게 패딩
-    # set_padded_ylim(ax_line_both, order_rate_pct.values, cohort_rate_pct.values)
-
-    # ax_line_both.legend(loc='best')
-    # apply_common_style(fig, ax_line_both, title="요일별 재구매율")
-    
-    # return fig, order_grp, cohort_grp
-
-    # --- 시각화 ---
-    # fig, (  ax_line_both) = plt.subplots(1, 1, figsize=(18, 5.5), constrained_layout=True)
-    
-    # x = np.arange(7)
-    # week_labels = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
-
-    # # Plot 3: Combined lines
-    # ax_line_both.plot(x, order_grp['Repeat_Rate'], marker='o', color=PRIMARY_COLOR, label='재구매일 기준')
-    # ax_line_both.plot(x, cohort_grp['Repeat_Rate'], marker='o', color=ACCENT_COLOR_2, label='첫구매일 기준')
-    # ax_line_both.set(ylabel="재구매율 (%)", xticks=x, xticklabels=week_labels)
-    # ax_line_both.yaxis.set_major_formatter(PercentFormatter(xmax=1.0, decimals=1))
-    # set_padded_ylim(ax_line_both, order_grp['Repeat_Rate'].values, cohort_grp['Repeat_Rate'].values)
-    # ax_line_both.legend(loc='best')
-    # apply_common_style(fig, ax_line_both, title="요일별 재구매율")
-    
-    # return fig, order_grp, cohort_grp
 
 @st.cache_data
-def create_hourly_hau_repeat_rate_chart(orders_df):
+def create_hourly_hau_repeat_rate_chart(orders_df, events_df):
     """
-    2023년 기준 시간대별 HAU(유니크 구매자 수)와 재구매율을 함께 보여주는 라인 차트 생성.
+    2023년 기준 시간대별 HAU(이벤트 기반 유니크 회원 수)와
+    재구매율(주문 기반)을 하나의 그래프에 그린다.
+    - y축 범위: 두 축 모두 0~20
+    - 눈금 간격: 2.5
+    - 19~23시는 관측 불가로 처리 (선이 끊김)
     """
-    # 필요한 컬럼만 사용
+
+    YEAR = 2023
+    START = pd.Timestamp(f"{YEAR}-01-01", tz="UTC")
+    END   = pd.Timestamp(f"{YEAR}-12-31 23:59:59", tz="UTC")
+    ACTIVE_EVENTS = ['home', 'department', 'product', 'cart', 'purchase']
+    NA_HOURS = list(range(19, 24))      # 19~23시
+    Y_MIN, Y_MAX, Y_STEP = 0.0, 20.0, 2.5
+
+    # -------------------------------
+    # 1) 이벤트 기반 HAU 계산
+    # -------------------------------
+    ev = events_df.copy()
+    ev = ev[ev['user_id'].notna()].copy()
+    ev['created_at'] = pd.to_datetime(ev['created_at'], utc=True, errors='coerce')
+    ev = ev.dropna(subset=['created_at'])
+
+    if 'event_type' not in ev.columns:
+        st.warning("events 데이터에 'event_type' 컬럼이 없어 HAU를 계산할 수 없습니다.")
+        return None, None
+
+    ev['event_type'] = ev['event_type'].astype(str).str.strip().str.lower()
+
+    ev_2023 = ev[
+        (ev['created_at'] >= START) &
+        (ev['created_at'] <= END) &
+        (ev['event_type'].isin(ACTIVE_EVENTS))
+    ].copy()
+
+    if ev_2023.empty:
+        st.warning("2023년 이벤트 데이터가 없어 HAU를 계산할 수 없습니다.")
+        return None, None
+
+    ev_2023['date'] = ev_2023['created_at'].dt.date
+    ev_2023['hour'] = ev_2023['created_at'].dt.hour
+
+    # 날짜·시간별 유니크 회원 수 → 시간별 평균
+    hau_by_date_hour = (
+        ev_2023.groupby(['date', 'hour'])['user_id']
+               .nunique()
+               .rename('hau')
+               .reset_index()
+    )
+    hau_hour_profile = (
+        hau_by_date_hour.groupby('hour')['hau']
+                        .mean()
+                        .rename('avg_HAU')
+                        .reset_index()
+    )
+
+    # 0~23 시각 모두 포함
+    hours_idx = pd.Index(range(24), name='hour')
+    hau_hour_profile = (
+        hours_idx.to_frame(index=False)
+                 .merge(hau_hour_profile, on='hour', how='left')
+    )
+    hau_hour_profile['avg_HAU'] = hau_hour_profile['avg_HAU'].fillna(0.0)
+
+    # -------------------------------
+    # 2) 주문 기반 시간대별 재구매율
+    # -------------------------------
     use_cols = [c for c in ['user_id', 'created_at', 'status'] if c in orders_df.columns]
     src = orders_df.loc[:, use_cols].copy()
     src = src[src['user_id'].notna()]
-
-    # 주문 상태 필터
-    if 'status' in src.columns:
-        src['status'] = src['status'].astype(str).str.strip().str.lower()
-        src = src[src['status'] == 'complete'].drop(columns=['status'])
+    src['status'] = src['status'].astype(str).str.strip().str.lower()
+    src = src[src['status'] == 'complete']
 
     if src.empty:
         st.warning("상태가 'Complete'인 주문이 없습니다.")
         return None, None
 
-    # 시간 파싱
     src['created_at'] = pd.to_datetime(src['created_at'], utc=True, errors='coerce')
-    src = src.dropna(subset=['created_at'])
+    src = src.dropna(subset=['created_at']).sort_values(['user_id', 'created_at'])
     if src.empty:
         st.warning("유효한 주문 시간이 없습니다.")
         return None, None
 
-    # 2023년 데이터만 사용
-    src_2023 = src[src['created_at'].dt.year == 2023].copy()
-    if src_2023.empty:
+    # 회원별 첫 주문 시각 (전체 기간 기준)
+    first_order_time = (
+        src.groupby('user_id', as_index=False)['created_at']
+           .min()
+           .rename(columns={'created_at': 'first_time'})
+    )
+
+    # 2023년 주문만 추출
+    ord23 = src[(src['created_at'] >= START) & (src['created_at'] <= END)].copy()
+    if ord23.empty:
         st.warning("2023년 주문 데이터가 없습니다.")
         return None, None
 
-    # 사용자별 첫 구매 시각
-    first = (
-        src_2023.groupby('user_id', as_index=False)['created_at']
-        .min()
-        .rename(columns={'created_at': 'first_time'})
+    ord23 = ord23.merge(first_order_time, on='user_id', how='left')
+    ord23['is_repeat'] = ord23['created_at'] > ord23['first_time']
+    ord23['hour'] = ord23['created_at'].dt.hour
+
+    rep_core = (
+        ord23.groupby('hour')
+             .agg(
+                 total_orders=('user_id', 'size'),
+                 repeat_orders=('is_repeat', 'sum')
+             )
+             .reset_index()
     )
 
-    lab = src_2023.merge(first, on='user_id', how='inner')
-    lab['is_repeat'] = lab['created_at'] > lab['first_time']
-    lab['hour'] = lab['created_at'].dt.hour  # 0~23시
-
-    # 0~23시 전체를 인덱스로 맞추기
-    hours_idx = pd.Index(range(24), name='hour')
-    agg = (
-        lab.groupby('hour')
-           .agg(
-               HAU=('user_id', 'nunique'),
-               total_orders=('user_id', 'count'),
-               repeat_orders=('is_repeat', 'sum')
-           )
-           .reindex(hours_idx, fill_value=0)
-           .reset_index()
+    rep = (
+        hours_idx.to_frame(index=False)
+                 .merge(rep_core, on='hour', how='left')
     )
+    rep['total_orders']  = rep['total_orders'].fillna(0).astype(int)
+    rep['repeat_orders'] = rep['repeat_orders'].fillna(0).astype(int)
 
-    # 재구매율 계산
-    agg['repeat_rate'] = np.where(
-        agg['total_orders'] > 0,
-        agg['repeat_orders'] / agg['total_orders'],
+    # 관측 불가 구간(19~23시)은 NaN으로 덮어서 선이 끊기게
+    mask_na = rep['hour'].isin(NA_HOURS)
+    rep.loc[mask_na, ['total_orders', 'repeat_orders']] = np.nan
+
+    rep['repeat_rate'] = np.where(
+        rep['total_orders'] > 0,
+        rep['repeat_orders'] / rep['total_orders'],
         np.nan
     )
+    rep['repeat_rate_pct'] = (rep['repeat_rate'] * 100).round(3)
 
-    # 19–23시는 재구매율 관측 불가로 처리 (라인 끊기게 NaN)
-    agg.loc[agg['hour'].between(19, 23), 'repeat_rate'] = np.nan
+    # -------------------------------
+    # 3) 시각화 (노트북 그래프와 동일한 세팅)
+    # -------------------------------
+    hours = np.arange(24)
 
-    # ---------------- 시각화 ----------------
-    fig, ax1 = plt.subplots(figsize=(12, 5))
+    hau_y = (
+        hau_hour_profile.set_index('hour')
+                        .reindex(hours)['avg_HAU']
+                        .values
+    )
+    rep_y = (
+        rep.set_index('hour')
+           .reindex(hours)['repeat_rate_pct']
+           .values
+    )
 
-    x = agg['hour']
+    fig, ax1 = plt.subplots(figsize=(14, 5))
 
-    # 왼쪽 축: HAU
-    line1 = ax1.plot(
-        x,
-        agg['HAU'],
+    # 왼쪽축: HAU
+    (line1,) = ax1.plot(
+        hours,
+        hau_y,
         marker='o',
         linewidth=2,
         color=HIGHLIGHT_COLOR,
-        label='HAU (유니크 구매자 수)'
+        label='Average HAU'
     )
-    ax1.set_xlabel("시간대 (시)")
-    ax1.set_ylabel("HAU (유니크 구매자 수)")
+    ax1.set_xlabel("시간대 (시, UTC)")
+    ax1.set_ylabel("Average HAU (unique members)", color="black")
+    ax1.tick_params(axis='y', labelcolor="black")
+    ax1.set_xticks(range(24))
+    ax1.grid(True, linestyle='--', alpha=0.6, zorder=1)
 
-    # 오른쪽 축: 재구매율
+    # y축 범위/눈금 고정 (왼쪽)
+    ax1.set_ylim(Y_MIN, Y_MAX)
+    ax1.set_yticks(np.arange(Y_MIN, Y_MAX + 1e-9, Y_STEP))
+    ax1.yaxis.set_major_locator(MultipleLocator(base=Y_STEP))
+
+    # 오른쪽축: 재구매율(%), 점선
     ax2 = ax1.twinx()
-    line2 = ax2.plot(
-        x,
-        agg['repeat_rate'],
+    (line2,) = ax2.plot(
+        hours,
+        rep_y,
         marker='s',
         linewidth=2,
+        linestyle='--',
         color=PRIMARY_COLOR,
-        label='재구매율'
+        label='Repeat Purchase Rate (%)'
     )
-    ax2.set_ylabel("재구매율 (%)")
-    ax2.yaxis.set_major_formatter(PercentFormatter(xmax=1.0, decimals=1))
+    ax2.set_ylabel("Repeat Purchase Rate (%)", color="black")
+    ax2.tick_params(axis='y', labelcolor="black")
 
-    # 범례 합치기
-    lines = line1 + line2
+    ax2.set_ylim(Y_MIN, Y_MAX)
+    ax2.set_yticks(np.arange(Y_MIN, Y_MAX + 1e-9, Y_STEP))
+    ax2.yaxis.set_major_locator(MultipleLocator(base=Y_STEP))
+
+    # 관측 불가 구간 음영 표시
+    ax1.axvspan(18.5, 23.5, color='gray', alpha=0.08, zorder=0)
+
+    # 범례 (우상단)
+    lines = [line1, line2]
     labels = [l.get_label() for l in lines]
-    ax1.legend(lines, labels, loc='upper right')
+    ax1.legend(lines, labels, loc='upper right', bbox_to_anchor=(0.98, 0.98), frameon=True)
 
-    apply_common_style(fig, ax1, title="2023년 HAU & 시간대별 재구매율")
+    apply_common_style(
+        fig,
+        ax1,
+        title="Average HAU & Repeat Purchase Rate by Hour (2023, UTC)\n(19–23시는 관측 불가 구간으로 표시)"
+    )
     fig.tight_layout()
 
-    return fig, agg
+    # 대시보드에서 테이블로 볼 수 있도록 데이터프레임도 같이 반환
+    result_df = rep.merge(
+        hau_hour_profile[['hour', 'avg_HAU']],
+        on='hour',
+        how='left'
+    )
+    result_df.rename(columns={'avg_HAU': 'HAU'}, inplace=True)
+    result_df['repeat_rate(%)'] = result_df['repeat_rate_pct']
+
+    return fig, result_df
+
+
+
+
+# @st.cache_data
+# def create_hourly_hau_repeat_rate_chart(orders_df):
+#     """
+#     2023년 기준 시간대별 HAU(유니크 구매자 수)와 재구매율을 함께 보여주는 라인 차트 생성.
+#     """
+#     # 필요한 컬럼만 사용
+#     use_cols = [c for c in ['user_id', 'created_at', 'status'] if c in orders_df.columns]
+#     src = orders_df.loc[:, use_cols].copy()
+#     src = src[src['user_id'].notna()]
+
+#     # 주문 상태 필터
+#     if 'status' in src.columns:
+#         src['status'] = src['status'].astype(str).str.strip().str.lower()
+#         src = src[src['status'] == 'complete'].drop(columns=['status'])
+
+#     if src.empty:
+#         st.warning("상태가 'Complete'인 주문이 없습니다.")
+#         return None, None
+
+#     # 시간 파싱
+#     src['created_at'] = pd.to_datetime(src['created_at'], utc=True, errors='coerce')
+#     src = src.dropna(subset=['created_at'])
+#     if src.empty:
+#         st.warning("유효한 주문 시간이 없습니다.")
+#         return None, None
+
+#     # 2023년 데이터만 사용
+#     src_2023 = src[src['created_at'].dt.year == 2023].copy()
+#     if src_2023.empty:
+#         st.warning("2023년 주문 데이터가 없습니다.")
+#         return None, None
+
+#     # 사용자별 첫 구매 시각
+#     first = (
+#         src_2023.groupby('user_id', as_index=False)['created_at']
+#         .min()
+#         .rename(columns={'created_at': 'first_time'})
+#     )
+
+#     lab = src_2023.merge(first, on='user_id', how='inner')
+#     lab['is_repeat'] = lab['created_at'] > lab['first_time']
+#     lab['hour'] = lab['created_at'].dt.hour  # 0~23시
+
+#     # 0~23시 전체를 인덱스로 맞추기
+#     hours_idx = pd.Index(range(24), name='hour')
+#     agg = (
+#         lab.groupby('hour')
+#            .agg(
+#                HAU=('user_id', 'nunique'),
+#                total_orders=('user_id', 'count'),
+#                repeat_orders=('is_repeat', 'sum')
+#            )
+#            .reindex(hours_idx, fill_value=0)
+#            .reset_index()
+#     )
+
+#     # 재구매율 계산
+#     agg['repeat_rate'] = np.where(
+#         agg['total_orders'] > 0,
+#         agg['repeat_orders'] / agg['total_orders'],
+#         np.nan
+#     )
+
+#     # 19–23시는 재구매율 관측 불가로 처리 (라인 끊기게 NaN)
+#     agg.loc[agg['hour'].between(19, 23), 'repeat_rate'] = np.nan
+
+#     # ---------------- 시각화 ----------------
+#     fig, ax1 = plt.subplots(figsize=(12, 5))
+
+#     x = agg['hour']
+
+#     # 왼쪽 축: HAU
+#     line1 = ax1.plot(
+#         x,
+#         agg['HAU'],
+#         marker='o',
+#         linewidth=2,
+#         color=HIGHLIGHT_COLOR,
+#         label='HAU (유니크 구매자 수)'
+#     )
+#     ax1.set_xlabel("시간대 (시)")
+#     ax1.set_ylabel("HAU (유니크 구매자 수)")
+
+#     # 오른쪽 축: 재구매율
+#     ax2 = ax1.twinx()
+#     line2 = ax2.plot(
+#         x,
+#         agg['repeat_rate'],
+#         marker='s',
+#         linewidth=2,
+#         color=PRIMARY_COLOR,
+#         label='재구매율'
+#     )
+#     ax2.set_ylabel("재구매율 (%)")
+#     ax2.yaxis.set_major_formatter(PercentFormatter(xmax=1.0, decimals=1))
+
+#     # 범례 합치기
+#     lines = line1 + line2
+#     labels = [l.get_label() for l in lines]
+#     ax1.legend(lines, labels, loc='upper right')
+
+#     apply_common_style(fig, ax1, title="2023년 HAU & 시간대별 재구매율")
+#     fig.tight_layout()
+
+#     return fig, agg
 
 
 

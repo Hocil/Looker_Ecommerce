@@ -422,14 +422,23 @@ else:
         st.subheader("2023년 HAU & 시간대별 재구매율")
         st.info("2023년 동안 시간대별 활성 사용자 수(HAU)와 재구매율을 함께 비교하여, 어떤 시간대에 재구매가 활발한지 확인합니다.")
 
-        hourly_fig, hourly_df = create_hourly_hau_repeat_rate_chart(orders_master)
+        # hourly_fig, hourly_df = create_hourly_hau_repeat_rate_chart(orders_master)
+        hourly_fig, hourly_df = create_hourly_hau_repeat_rate_chart(orders_master, events_master)
 
+        # if hourly_fig:
+        #     st.pyplot(hourly_fig)
+        #     with st.expander("상세 데이터 보기"):
+        #         # 재구매율을 % 단위로 보기 좋게 변환
+        #         df_show = hourly_df.copy()
+        #         df_show['repeat_rate(%)'] = (df_show['repeat_rate'] * 100).round(2)
+        #         st.dataframe(
+        #             df_show[['hour', 'HAU', 'total_orders', 'repeat_orders', 'repeat_rate(%)']]
+        #             .rename(columns={'hour': '시간대(시)'})
+        #         )
         if hourly_fig:
             st.pyplot(hourly_fig)
             with st.expander("상세 데이터 보기"):
-                # 재구매율을 % 단위로 보기 좋게 변환
                 df_show = hourly_df.copy()
-                df_show['repeat_rate(%)'] = (df_show['repeat_rate'] * 100).round(2)
                 st.dataframe(
                     df_show[['hour', 'HAU', 'total_orders', 'repeat_orders', 'repeat_rate(%)']]
                     .rename(columns={'hour': '시간대(시)'})

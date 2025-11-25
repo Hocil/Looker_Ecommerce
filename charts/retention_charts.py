@@ -641,12 +641,134 @@ def fmt_pct3(x):
     if pd.isna(x): return "NA"
     return f"{x*100:.3f}%"
 
+# @st.cache_data
+# def create_weekday_weekend_chart(orders_df, start_date, end_date):
+#     """
+#     선택된 기간의 데이터를 기반으로 주중/주말 재구매 패턴을 분석하고 시각화합니다.
+#     """
+#     # (앞부분 로직은 동일)
+#     use_cols = [c for c in ['user_id','created_at','status'] if c in orders_df.columns]
+
+#     src = orders_df.loc[:, use_cols].copy()
+#     src = src[src['user_id'].notna()]
+#     src['status'] = src['status'].astype(str).str.strip().str.lower()
+#     src = src[src['status'] == 'complete'].drop(columns=['status'])
+#     if src.empty:
+#         raise ValueError("status == 'Complete' 조건을 만족하는 주문이 없습니다.")
+
+#     # 시간 파싱 + 일자 단위
+#     src['created_at'] = pd.to_datetime(src['created_at'], utc=True, errors='coerce')
+#     src = src.dropna(subset=['created_at']).sort_values(['user_id','created_at'])
+#     if src.empty:
+#         raise ValueError("회원/시간 파싱 후 사용 가능한 주문이 없습니다.")
+
+#     src['order_day'] = src['created_at'].dt.floor('D')
+#     last_day = src['order_day'].max()
+
+#     # 사용자별 첫 구매월 산출
+#     first = (
+#     src.groupby('user_id', as_index=False)['order_day']
+#        .min().rename(columns={'order_day':'cohort_day'})
+#     )
+#     first_2023 = first[first['cohort_day'].dt.year == 2023].copy()
+#     cohort_size = first_2023.groupby('cohort_day')['user_id'].nunique().rename('cohort_size')
+
+#     # 3) 주문에 코호트 라벨 조인 + 코호트 에이지(주)
+#     lab = src.merge(first_2023[['user_id','cohort_day']], on='user_id', how='inner')
+#     lab['age_d'] = (lab['order_day'] - lab['cohort_day']).dt.days
+#     lab = lab[(lab['age_d'] >= 0) & (lab['age_d'] <= 31)].copy()
+
+#     # 4) 관측 가능한 셀만 유지 (오른쪽 검열 제거)
+#     cohort_days = np.sort(first_2023['cohort_day'].unique())
+#     age_vals    = np.arange(0, 31+1)  # 계산은 Age 0 포함
+#     grid = pd.MultiIndex.from_product([cohort_days, age_vals],
+#                                     names=['cohort_day','age_d']).to_frame(index=False)
+#     grid['order_day'] = grid['cohort_day'] + pd.to_timedelta(grid['age_d'], unit='D')
+#     grid = grid[grid['order_day'] <= last_day].drop(columns=['order_day'])
+
+#     # 5) (cohort_week_idx, age_w)별 활성 사용자 수(고유 user_id)
+#     counts = (lab.groupby(['cohort_day','age_d'])['user_id']
+#             .nunique().rename('active_users').reset_index())
+#     counts = grid.merge(counts, on=['cohort_day','age_d'], how='left').fillna({'active_users':0})
+
+#     # 6) Repeat Purchase Rate 계산
+#     counts = counts.merge(cohort_size, on='cohort_day', how='left')
+#     counts['retention_rate'] = counts['active_users'] / counts['cohort_size']  # 내부 변수명 유지
+
+
+#     # --- 제공해주신 코드 로직 (Prep, Aggregations) ---
+#     df = counts.copy()
+#     df = df[df['age_d'] >= 1].copy()
+#     if df.empty:
+#         st.warning("재구매 데이터(Age≥1)가 없습니다.")
+#         return None, None
+        
+#     df['cohort_day'] = pd.to_datetime(df['cohort_day'], utc=True, errors='coerce')
+#     df = df.dropna(subset=['cohort_day'])
+#     df['repurch_date'] = df['cohort_day'] + pd.to_timedelta(df['age_d'], unit='D')
+#     df['repurch_wd'] = df['repurch_date'].dt.dayofweek
+#     df['is_weekend'] = df['repurch_wd'].isin({5,6})
+
+#     g = (df.groupby('is_weekend', as_index=False)
+#            .agg(Repeaters=('active_users','sum'), Exposure=('cohort_size','sum')))
+#     g['Rate'] = np.where(g['Exposure']>0, g['Repeaters']/g['Exposure'], np.nan)
+#     # ✨ 표/그래프 라벨: 토+일 -> 토-일
+#     g['Group'] = np.where(g['is_weekend'], '주말 (토-일)', '주중 (월-금)')
+#     g = g.sort_values('is_weekend').reset_index(drop=True)
+
+#     # ✨ 테이블 생성: 재구매율 소수 셋째 자리까지
+#     tbl = pd.DataFrame({
+#         '구분': g['Group'],
+#         '재구매자 수': g['Repeaters'].astype(int),
+#         '전체 코호트 크기': g['Exposure'].astype(int),
+#         '재구매율 (%)': (g['Rate']*100).round(3)   # 예: 0.074, 0.083
+#     })
+
+#     # ✨ 막대 차트 생성 (파랑 + 하늘색 계열 가정)
+#     fig, ax = plt.subplots(figsize=(7, 5))
+#     bars = ax.bar(
+#         g['Group'],
+#         g['Rate'],
+#         color=[PRIMARY_COLOR, HIGHLIGHT_COLOR],
+#         edgecolor='none'
+#     )
+
+
+#     # 눈금은 그대로 0.00%, 0.02%, 0.04%, 0.06%, 0.08% 유지
+#     ax.set_yticks([0.0, 0.0002, 0.0004, 0.0006, 0.0008])
+
+#     # y축 범위: 최소 0.08%는 보장하되, 실제 최대값보다 조금 여유 있게
+#     max_rate = float(np.nanmax(g['Rate'])) if len(g) else 0.0
+#     ymax = max(0.0008, max_rate * 1.1)  # 실제 값보다 10% 정도 여유
+#     ax.set_ylim(0, ymax)
+
+#     # 눈금은 그대로 0.00%, 0.02%, 0.04%, 0.06%, 0.08% 유지
+#     ax.set_yticks([0.0, 0.0002, 0.0004, 0.0006, 0.0008])
+
+#     # 🔹 막대 안쪽에 라벨 넣기 (그래프 안에서 보이도록)
+#     for rect, r in zip(bars, g['Rate']):
+#         ax.annotate(
+#             f"{r*100:.3f}%",
+#             xy=(rect.get_x() + rect.get_width()/2, r),
+#             xytext=(0, -10),                # 아래쪽으로 10pt 내리기
+#             textcoords='offset points',
+#             ha='center',
+#             va='top',                       # 위를 기준으로 안쪽에 붙이기
+#         )
+
+#     ax.yaxis.set_major_formatter(PercentFormatter(xmax=1.0, decimals=2))
+#     ax.set_ylabel("재구매율 (%)")
+#     apply_common_style(fig, ax, title="주문일 기준 주중 vs 주말 재구매율 비교")
+#     fig.tight_layout()
+
+#     return fig, tbl
+
 @st.cache_data
 def create_weekday_weekend_chart(orders_df, start_date, end_date):
     """
     선택된 기간의 데이터를 기반으로 주중/주말 재구매 패턴을 분석하고 시각화합니다.
     """
-    # (앞부분 로직은 동일)
+
     use_cols = [c for c in ['user_id','created_at','status'] if c in orders_df.columns]
 
     src = orders_df.loc[:, use_cols].copy()
@@ -654,114 +776,89 @@ def create_weekday_weekend_chart(orders_df, start_date, end_date):
     src['status'] = src['status'].astype(str).str.strip().str.lower()
     src = src[src['status'] == 'complete'].drop(columns=['status'])
     if src.empty:
-        raise ValueError("status == 'Complete' 조건을 만족하는 주문이 없습니다.")
+        st.warning("status == 'Complete' 조건을 만족하는 주문이 없습니다.")
+        return None, None
 
-    # 시간 파싱 + 일자 단위
     src['created_at'] = pd.to_datetime(src['created_at'], utc=True, errors='coerce')
     src = src.dropna(subset=['created_at']).sort_values(['user_id','created_at'])
-    if src.empty:
-        raise ValueError("회원/시간 파싱 후 사용 가능한 주문이 없습니다.")
 
     src['order_day'] = src['created_at'].dt.floor('D')
-    last_day = src['order_day'].max()
 
-    # 사용자별 첫 구매월 산출
+    # 사용자별 첫 구매일
     first = (
-    src.groupby('user_id', as_index=False)['order_day']
-       .min().rename(columns={'order_day':'cohort_day'})
+        src.groupby('user_id', as_index=False)['order_day']
+           .min().rename(columns={'order_day':'cohort_day'})
     )
     first_2023 = first[first['cohort_day'].dt.year == 2023].copy()
     cohort_size = first_2023.groupby('cohort_day')['user_id'].nunique().rename('cohort_size')
 
-    # 3) 주문에 코호트 라벨 조인 + 코호트 에이지(주)
+    # 코호트 조인
     lab = src.merge(first_2023[['user_id','cohort_day']], on='user_id', how='inner')
     lab['age_d'] = (lab['order_day'] - lab['cohort_day']).dt.days
-    lab = lab[(lab['age_d'] >= 0) & (lab['age_d'] <= 31)].copy()
+    lab = lab[(lab['age_d'] >= 1) & (lab['age_d'] <= 31)].copy()
 
-    # 4) 관측 가능한 셀만 유지 (오른쪽 검열 제거)
-    cohort_days = np.sort(first_2023['cohort_day'].unique())
-    age_vals    = np.arange(0, 31+1)  # 계산은 Age 0 포함
-    grid = pd.MultiIndex.from_product([cohort_days, age_vals],
-                                    names=['cohort_day','age_d']).to_frame(index=False)
-    grid['order_day'] = grid['cohort_day'] + pd.to_timedelta(grid['age_d'], unit='D')
-    grid = grid[grid['order_day'] <= last_day].drop(columns=['order_day'])
+    # 재구매 발생일
+    lab['repurch_date'] = lab['cohort_day'] + pd.to_timedelta(lab['age_d'], unit='D')
+    lab['repurch_wd'] = lab['repurch_date'].dt.dayofweek
+    lab['is_weekend'] = lab['repurch_wd'].isin({5, 6})
 
-    # 5) (cohort_week_idx, age_w)별 활성 사용자 수(고유 user_id)
-    counts = (lab.groupby(['cohort_day','age_d'])['user_id']
-            .nunique().rename('active_users').reset_index())
-    counts = grid.merge(counts, on=['cohort_day','age_d'], how='left').fillna({'active_users':0})
+    g = (
+        lab.groupby('is_weekend', as_index=False)
+           .agg(Repeaters=('user_id','nunique'),
+                Exposure=('cohort_day','count'))
+    )
 
-    # 6) Repeat Purchase Rate 계산
-    counts = counts.merge(cohort_size, on='cohort_day', how='left')
-    counts['retention_rate'] = counts['active_users'] / counts['cohort_size']  # 내부 변수명 유지
-
-
-    # --- 제공해주신 코드 로직 (Prep, Aggregations) ---
-    df = counts.copy()
-    df = df[df['age_d'] >= 1].copy()
-    if df.empty:
-        st.warning("재구매 데이터(Age≥1)가 없습니다.")
-        return None, None
-        
-    df['cohort_day'] = pd.to_datetime(df['cohort_day'], utc=True, errors='coerce')
-    df = df.dropna(subset=['cohort_day'])
-    df['repurch_date'] = df['cohort_day'] + pd.to_timedelta(df['age_d'], unit='D')
-    df['repurch_wd'] = df['repurch_date'].dt.dayofweek
-    df['is_weekend'] = df['repurch_wd'].isin({5,6})
-
-    g = (df.groupby('is_weekend', as_index=False)
-           .agg(Repeaters=('active_users','sum'), Exposure=('cohort_size','sum')))
-    g['Rate'] = np.where(g['Exposure']>0, g['Repeaters']/g['Exposure'], np.nan)
-    # ✨ 표/그래프 라벨: 토+일 -> 토-일
+    g['Rate'] = g['Repeaters'] / g['Exposure']
     g['Group'] = np.where(g['is_weekend'], '주말 (토-일)', '주중 (월-금)')
     g = g.sort_values('is_weekend').reset_index(drop=True)
 
-    # ✨ 테이블 생성: 재구매율 소수 셋째 자리까지
+    # 📊 테이블 데이터 만들기
     tbl = pd.DataFrame({
         '구분': g['Group'],
         '재구매자 수': g['Repeaters'].astype(int),
         '전체 코호트 크기': g['Exposure'].astype(int),
-        '재구매율 (%)': (g['Rate']*100).round(3)   # 예: 0.074, 0.083
+        '재구매율 (%)': (g['Rate'] * 100).round(3)
     })
 
-    # ✨ 막대 차트 생성 (파랑 + 하늘색 계열 가정)
-    fig, ax = plt.subplots(figsize=(7, 5))
+    # 그래프: % 스케일로 맞추기
+    fig, ax = plt.subplots(figsize=(7, 4.8))
+
+    rate_pct = g['Rate'] * 100  # ← 0.074 → 7.4% 형태 변환
+
     bars = ax.bar(
         g['Group'],
-        g['Rate'],
+        rate_pct,
         color=[PRIMARY_COLOR, HIGHLIGHT_COLOR],
         edgecolor='none'
     )
 
-
-    # 눈금은 그대로 0.00%, 0.02%, 0.04%, 0.06%, 0.08% 유지
-    ax.set_yticks([0.0, 0.0002, 0.0004, 0.0006, 0.0008])
-
-    # y축 범위: 최소 0.08%는 보장하되, 실제 최대값보다 조금 여유 있게
-    max_rate = float(np.nanmax(g['Rate'])) if len(g) else 0.0
-    ymax = max(0.0008, max_rate * 1.1)  # 실제 값보다 10% 정도 여유
+    # Y축 범위 자동 설정 (다른 그래프와 비슷한 느낌)
+    ymax = max(rate_pct.max() * 1.25, 0.1)
     ax.set_ylim(0, ymax)
 
-    # 눈금은 그대로 0.00%, 0.02%, 0.04%, 0.06%, 0.08% 유지
-    ax.set_yticks([0.0, 0.0002, 0.0004, 0.0006, 0.0008])
+    # 퍼센트 포맷(0.05%, 0.08% 등)
+    ax.yaxis.set_major_formatter(PercentFormatter(xmax=100.0, decimals=2))
+    ax.set_ylabel("재구매율 (%)")
 
-    # 🔹 막대 안쪽에 라벨 넣기 (그래프 안에서 보이도록)
-    for rect, r in zip(bars, g['Rate']):
+    # ✔ 바 레이블 (중앙 위, 검정색)
+    for rect, val in zip(bars, rate_pct):
         ax.annotate(
-            f"{r*100:.3f}%",
-            xy=(rect.get_x() + rect.get_width()/2, r),
-            xytext=(0, -10),                # 아래쪽으로 10pt 내리기
-            textcoords='offset points',
+            f"{val:.3f}%",
+            xy=(rect.get_x() + rect.get_width() / 2, val),
+            xytext=(0, 5),
+            textcoords="offset points",
             ha='center',
-            va='top',                       # 위를 기준으로 안쪽에 붙이기
+            va='bottom',
+            fontsize=11,
+            color='black'
         )
 
-    ax.yaxis.set_major_formatter(PercentFormatter(xmax=1.0, decimals=2))
-    ax.set_ylabel("재구매율 (%)")
+    # 스타일 통일
     apply_common_style(fig, ax, title="주문일 기준 주중 vs 주말 재구매율 비교")
     fig.tight_layout()
 
     return fig, tbl
+
 
 @st.cache_data
 def create_weekly_cohort_heatmap(orders_df, selected_month, selected_week, max_age_w, show_annotations=True):

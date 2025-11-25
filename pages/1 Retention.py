@@ -382,12 +382,12 @@ else:
                     height = rect.get_height()
                     ax_bar.text(
                         rect.get_x() + rect.get_width() / 2,
-                        height * 0.5,                        # 막대 중간쯤
+                        height * 0.5,                        # 막대 중간
                         f"{int(height):,}",                  # 43, 50 이런 식
                         ha="center",
                         va="center",
                         fontsize=11,
-                        color="white",                        # 안쪽이니까 흰색 글자
+                        color="black",                      
                         fontweight="bold",
                     )
 

@@ -3,6 +3,7 @@ import pandas as pd
 import koreanize_matplotlib
 import matplotlib.pyplot as plt
 from data import load_all_data
+from style_config import apply_common_style, PRIMARY_COLOR, HIGHLIGHT_COLOR
 
 # from charts.retention_charts import (
 #     create_purchase_distribution_chart, 
@@ -329,15 +330,43 @@ else:
             st.pyplot(weekday_fig)
             st.info("사용자들이 실제로 재구매를 가장 많이 수행하는 요일을 확인할 수 있는 그래프입니다.")
             # 요일별 재구매자 수 막대 그래프
+            # if order_data is not None and not order_data.empty:
+            #     st.subheader("요일별 재구매자 수")
+
+            #     fig_bar, ax_bar = plt.subplots()
+            #     ax_bar.bar(order_data["Weekday"], order_data["Repeat_Orders"])
+            #     ax_bar.set_xlabel("요일")
+            #     ax_bar.set_ylabel("재구매자 수")
+            #     ax_bar.set_title("요일별 재구매자 수")
+            #     st.pyplot(fig_bar)
+
+            # 요일별 재구매자 수 막대 그래프
             if order_data is not None and not order_data.empty:
                 st.subheader("요일별 재구매자 수")
 
-                fig_bar, ax_bar = plt.subplots()
-                ax_bar.bar(order_data["Weekday"], order_data["Repeat_Orders"])
-                ax_bar.set_xlabel("요일")
-                ax_bar.set_ylabel("재구매자 수")
-                ax_bar.set_title("요일별 재구매자 수")
+                # ▶ 위 선그래프와 비슷한 비율로(너무 세로로 길지 않게) 사이즈 조정
+                fig_bar, ax_bar = plt.subplots(figsize=(10, 4))
+
+                # ▶ 색상도 공통 팔레트 사용
+                bars = ax_bar.bar(
+                    order_data["Weekday"],
+                    order_data["Repeat_Orders"],
+                    color=HIGHLIGHT_COLOR,
+                    edgecolor="none",
+                )
+
+                # ▶ 축/레이블 설정 (글자 크기도 적당히)
+                ax_bar.set_xlabel("요일", fontsize=11)
+                ax_bar.set_ylabel("재구매자 수", fontsize=11)
+
+                # ▶ 스타일 통일 (연한 회색 테두리, 폰트 톤 등)
+                apply_common_style(fig_bar, ax_bar, title="요일별 재구매자 수")
+
+                # ▶ 선그래프처럼 상하 여백만 살짝 정리
+                fig_bar.tight_layout()
+
                 st.pyplot(fig_bar)
+
 
             # 상세 데이터 테이블
             with st.expander("상세 데이터 보기"):

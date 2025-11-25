@@ -7,6 +7,8 @@ from matplotlib.ticker import PercentFormatter
 from matplotlib.ticker import StrMethodFormatter 
 import koreanize_matplotlib
 from style_config import apply_common_style, HIGHLIGHT_COLOR,SECONDARY_COLOR, SEQUENTIAL_PALETTE, PRIMARY_COLOR, ACCENT_COLOR_2
+from matplotlib.ticker import PercentFormatter, StrMethodFormatter, MultipleLocator
+
 
 @st.cache_data
 def create_purchase_distribution_chart(order_items_df):

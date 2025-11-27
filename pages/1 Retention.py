@@ -135,8 +135,9 @@ else:
 
     with tab1:
         st.subheader("사용자별 구매 횟수 분포")
-        st.info("전체 사용자 중 재구매자와 일회성 구매자의 비율을 파악합니다. 막대그래프는 특정 횟수만큼 구매한 사용자의 수를 보여줍니다.")
-
+        st.info(
+            "데이터셋 전체 기간 동안 각 사용자가 몇 번의 주문을 했는지 집계한 결과입니다. "
+            "일회성 고객과 재구매 고객 비율의 큰 그림을 파악하는 데 활용합니다.")
         if not all_data or "order_items" not in all_data:
             st.error("주문(order_items) 데이터를 불러오는데 실패했습니다.")
         else:
@@ -154,6 +155,8 @@ else:
                     st.write("#### 데이터 요약")
                     st.dataframe(dist_data)
         
+        st.caption("※ Retention 탭의 이 분포 그래프는 다른 탭/사이드바 설정과 무관하게, "
+                   "항상 전체 주문 이력을 기준으로 계산.")
         st.divider()
 
 

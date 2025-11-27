@@ -248,11 +248,16 @@ with tab1:
     st.pyplot(fig)
 
 
-# 2️⃣ Customer Insights
+# Customer Insights
 with tab2:
     # ---------------- 구매 빈도 & 고객 분포 ----------------
     st.subheader("구매빈도 및 고객분포")
-    st.info("구매횟수 별 유저비율, 고객 매출 기여도, 고객 매출분포")
+    st.info(
+        "왼쪽 사이드바에서 선택한 월, 주문 상태, 성별, 연령대, 유입 경로, 카테고리, 브랜드 조건을 모두 반영하여 "
+        "해당 조건에 속한 고객들의 구매 횟수 분포와 매출 기여도를 분석합니다. "
+        "특정 세그먼트(필터 조건)에 한정된 분포를 보는 용도입니다."
+    )
+
 
     # 유저별 구매 횟수 (필터 일치 위해 order_items_filtered에서 고유 주문 수 집계)
     user_order_counts = (
@@ -291,7 +296,8 @@ with tab2:
                 edgecolor="white",
                 linewidth=0.7
             )
-            ax.set_title("주문 횟수별 고객 분포", fontsize=12, fontweight="bold", pad=10)
+            # ax.set_title("주문 횟수별 고객 분포", fontsize=12, fontweight="bold", pad=10)
+            ax.set_title("선택 조건 기준 주문 횟수별 고객 분포",fontsize=12, fontweight="bold", pad=10)
             ax.set_xlabel("주문 횟수", fontsize=10)
             ax.set_ylabel("고객 수", fontsize=10)
             ax.grid(axis="y", linestyle="--", alpha=0.4)
@@ -375,6 +381,7 @@ with tab2:
             ax.text(0.5, 0.5, "데이터가 없습니다", ha="center", va="center", fontsize=10)
             ax.axis("off")
         st.pyplot(fig)
+        st.caption("※ 이 탭의 모든 지표와 그래프는 왼쪽 사이드바 필터 조건(월·주문 상태·성별·연령대·유입 경로·카테고리·브랜드)을 모두 반영한 결과")
 
 
 # 3️⃣ Category Insights

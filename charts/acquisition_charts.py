@@ -6,24 +6,24 @@ import matplotlib.ticker as mticker
 import seaborn as sns
 import koreanize_matplotlib
 import calendar
-from style_config import apply_common_style, PRIMARY_COLOR, SECONDARY_COLOR, CATEGORICAL_PALETTE, DIVERGING_PALETTE, ACCENT_COLOR_1
+from style_config import apply_common_style, PRIMARY_COLOR, SECONDARY_COLOR, NAVY_ACCENT_COLOR, CATEGORICAL_PALETTE, DIVERGING_PALETTE, ACCENT_COLOR_1
 import plotly.express as px
 
 raw_data_schema={
         'user_id': 'session_id', 'event_name': 'event_type', 'event_timestamp': 'created_at'
     }
 
-# --- 🎨 차트 생성 함수들 (기능별로 분리 및 캐싱) ---
+# --- 차트 생성 함수들 (기능별로 분리 및 캐싱) ---
 
 @st.cache_data
 # 수정: start_date, end_date를 인자로 추가
 def create_mau_revenue_chart(order_items_df, events_df, start_date, end_date):
     """월별 매출 및 MAU 이중 축 그래프를 생성합니다."""
-    # 수정: 함수 내부에서 날짜 필터링 수행
+    # 함수 내부에서 날짜 필터링 수행
     order_items_filtered = order_items_df
     events_filtered = events_df
 
-    # (이하 로직은 필터링된 데이터를 사용하도록 수정)
+    # 로직은 필터링된 데이터를 사용하도록
     valid_status = ['Complete', 'Returned', 'Cancelled']
     sales_df = order_items_filtered[order_items_filtered['status'].isin(valid_status)].copy()
     sales_df['month'] = sales_df['created_at'].dt.to_period('M')
@@ -36,7 +36,7 @@ def create_mau_revenue_chart(order_items_df, events_df, start_date, end_date):
     if combined_df.empty: return plt.figure(), pd.DataFrame()
     combined_df.index = combined_df.index.strftime('%Y-%m')
     
-    # (그래프 그리는 부분은 이전과 동일)
+    # 그래프 그리는 부분은 이전과 동일
     fig, ax1 = plt.subplots(figsize=(12, 6))
     ax1.bar(combined_df.index, combined_df['Revenue'], color=PRIMARY_COLOR, alpha=0.7, label='매출')
     ax1.set_ylabel('매출 (USD)', color=PRIMARY_COLOR, fontsize=12)
@@ -44,9 +44,9 @@ def create_mau_revenue_chart(order_items_df, events_df, start_date, end_date):
     ax1.yaxis.set_major_formatter(mticker.StrMethodFormatter('${x:,.0f}'))
     ax1.tick_params(axis='x', rotation=45)
     ax2 = ax1.twinx()
-    ax2.plot(combined_df.index, combined_df['MAU'], color=SECONDARY_COLOR, marker='o', linestyle='-', label='MAU')
-    ax2.set_ylabel('월간 활성 사용자 수 (MAU)', color=SECONDARY_COLOR, fontsize=12)
-    ax2.tick_params(axis='y', labelcolor=SECONDARY_COLOR)
+    ax2.plot(combined_df.index, combined_df['MAU'], color=NAVY_ACCENT_COLOR, marker='o', linestyle='-', label='MAU')
+    ax2.set_ylabel('월간 활성 사용자 수 (MAU)', color=NAVY_ACCENT_COLOR, fontsize=12)
+    ax2.tick_params(axis='y', labelcolor=NAVY_ACCENT_COLOR)
     ax2.yaxis.set_major_formatter(mticker.StrMethodFormatter('{x:,.0f}'))
     lines, labels = ax1.get_legend_handles_labels()
     lines2, labels2 = ax2.get_legend_handles_labels()

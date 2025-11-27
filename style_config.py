@@ -5,6 +5,7 @@ import koreanize_matplotlib
 PRIMARY_COLOR = "#4C78A8"       # 차분한 파란색 (메인)
 # SECONDARY_COLOR = "#F58518"     # 안전한 주황색 (보조)
 SECONDARY_COLOR = "#5FAAE6"     # 안전한 주황색 (보조)
+NAVY_ACCENT_COLOR =  "#2F31A8" 
 ACCENT_COLOR_1 = "#54A24B"      # 녹색 (강조 1)
 ACCENT_COLOR_2 = "#E45756"      # 붉은색 (강조 2)
 NEUTRAL_COLOR = "#727272"       # 중간 회색 (중립/텍스트)

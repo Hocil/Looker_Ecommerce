@@ -218,7 +218,7 @@ with tab1:
     with col1:
         st.metric("평균 소요 일수", f"{ttfp_mean:.1f}일")
     with col2:
-        st.metric("중앙값 소요 일수", f"{ttfp_median:.1f}일")
+        st.metric("중앙값 소요 일수", f"{ttfp_median:.0f}일")
     with col3:
         st.metric("최대 소요 일수", f"{ttfp_max:.0f}일")
 

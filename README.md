@@ -1,4 +1,4 @@
-# 🛍️ E-Commerce Retention Analysis  
+# E-Commerce Retention Analysis  
 **2023년 재구매율 11.9%의 원인을 분석하고, 개선 전략을 제시하는 프로젝트입니다.**
 
 본 분석은 가상의 패션 이커머스 데이터를 기반으로  

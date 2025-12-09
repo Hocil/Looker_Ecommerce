@@ -94,13 +94,13 @@
 ---
 
 ## 📁 Project Structure (요약)
-Looker_Ecommerce/
-├─ app.py
-├─ pages/
-├─ charts/
-├─ data/
-├─ transformer/
-└─ style_config.py
+Looker_Ecommerce/ <br>
+├─ app.py <br>
+├─ pages/ <br>
+├─ charts/ <br>
+├─ data/ <br>
+├─ transformer/ <br>
+└─ style_config.py <br>
 
 ---
 
